@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 # Models
 MODEL_SEARCH = "gemini-2.5-flash-native-audio-preview-12-2025"  # Live API + Search
-MODEL_FORMATTER = "gemma-3-27b-it"                              # Structuring
+MODEL_FORMATTER = "gemini-2.5-flash"                        # Structuring
 
 # Configure Gemini client
 client = None
@@ -234,6 +234,86 @@ def batch_identify_movies(movies: list, delay: float = AI_REQUEST_DELAY) -> list
     
     return results
 
+
+# Prompt for Bulk Mode
+BULK_PROMPT = """
+You are a movie metadata expert. I will provide a list of filenames with IDs.
+For EACH file, you MUST perform a Google Search to find the correct IMDb ID (ttXXXXXXX).
+
+INPUT LIST:
+{file_list}
+
+INSTRUCTIONS:
+1. For each movie, searching for "movie name year imdb".
+2. EXTRACT the IMDb ID (starts with 'tt') from the search results.
+3. Return a JSON ARRAY of objects.
+4. Each object must have:
+   - "id": (The ID provided in the input)
+   - "movie_title": (Official Title)
+   - "year": (Release Year)
+   - "imdb_id": (The IMDb ID you found, e.g., "tt0133093". Do NOT return "NA" unless absolutely impossible.)
+   - "confidence": "high" or "low"
+5. STRICT JSON OUTPUT ONLY. Do not use code blocks.
+"""
+
+def identify_movies_bulk(movies: list) -> list:
+    """
+    Batch identify movies using a single API call.
+    Uses the Formatter model (gemini-2.5-flash) which is fast and text-optimized.
+    """
+    if not movies:
+        return []
+        
+    client = get_client()
+    
+    # Prepare input list text
+    input_lines = []
+    for m in movies:
+        # Use UUID as ID to map back
+        line = f"ID: {m['uuid']} | File: {m['file_name']} | Parsed: {m.get('extracted_name', '')} ({m.get('extracted_year', '')})"
+        input_lines.append(line)
+        
+    file_list_text = "\n".join(input_lines)
+    prompt = BULK_PROMPT.format(file_list=file_list_text)
+    
+    try:
+        # The 2.5 Flash model supports tools but combining JSON mode and Tools is tricky.
+        # Let's rely on the prompt for JSON structure and keep tools for accuracy.
+        config = {
+            "tools": [{"google_search": {}}],
+            # "response_mime_type": "application/json"  <-- Causing conflict
+        }
+        
+        response = client.models.generate_content(
+            model=MODEL_FORMATTER, # Using the flash model (gemini-2.5-flash)
+            contents=prompt,
+            config=config
+        )
+        
+        # Parse output
+        text = response.text.strip()
+        # Clean up if wrapped in markdown
+        if text.startswith("```json"):
+            text = text[7:]
+        if text.endswith("```"):
+            text = text[:-3]
+        text = text.strip()
+        
+        results = json.loads(text)
+        
+        # Ensure it's a list
+        if isinstance(results, dict):
+            # Sometimes models return {"movies": [...]}
+            if "movies" in results:
+                results = results["movies"]
+            else:
+                results = [results]
+                
+        return results
+
+    except Exception as e:
+        logger.error(f"Bulk identification failed: {e}")
+        return []
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

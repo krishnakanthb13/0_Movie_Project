@@ -92,6 +92,76 @@ def enrich_with_ai(limit: Optional[int] = None) -> int:
     return enriched_count
 
 
+def enrich_with_ai_bulk(limit: Optional[int] = None) -> int:
+    """
+    Enrich movies using Gemini AI in Bulk Mode.
+    
+    Args:
+        limit: Optional limit on number of movies to process
+        
+    Returns:
+        Number of movies enriched
+    """
+    from gemini_client import identify_movies_bulk
+    
+    # Get unenriched movies
+    movies = get_unenriched_movies()
+    
+    if limit:
+        movies = movies[:limit]
+    
+    if not movies:
+        logger.info("No movies pending AI enrichment")
+        return 0
+    
+    logger.info(f"Starting BULK AI enrichment for {len(movies)} movies...")
+    
+    # Process in chunks (maximum 50 per call)
+    CHUNK_SIZE = 50
+    enriched_count = 0
+    
+    for i in range(0, len(movies), CHUNK_SIZE):
+        chunk = movies[i : i + CHUNK_SIZE]
+        logger.info(f"Processing chunk {i//CHUNK_SIZE + 1} ({len(chunk)} movies)...")
+        
+        try:
+            results = identify_movies_bulk(chunk)
+            
+            # Map results map to UUID map for easier lookup
+            results_map = {r.get("id"): r for r in results if r.get("id")}
+            
+            for movie in chunk:
+                uuid_val = movie["uuid"]
+                if uuid_val in results_map:
+                    res = results_map[uuid_val]
+                    
+                    updates = {
+                        "ai_title": res.get("movie_title", "NA"),
+                        "ai_year": res.get("year", "NA"),
+                        "imdb_id": res.get("imdb_id", "NA")
+                    }
+                    
+                    if updates["ai_title"] != "NA":
+                        update_sqlite_record(uuid_val, updates)
+                        enriched_count += 1
+                        logger.info(f"  -> {updates['ai_title']} ({updates['ai_year']})")
+                else:
+                    logger.warning(f"  -> No result returned for {movie['file_name']}")
+                    
+            # Small delay between chunks
+            time.sleep(1)
+            
+        except Exception as e:
+            logger.error(f"Error processing chunk: {e}")
+            continue
+            
+    # Sync to CSV
+    sync_sqlite_to_csv()
+    
+    logger.info(f"Bulk AI enrichment complete. Enriched {enriched_count} movies.")
+    return enriched_count
+
+
 def enrich_with_omdb(limit: Optional[int] = None) -> int:
     """
     Enrich movies using OMDb API.

@@ -169,6 +169,7 @@ Examples:
     parser.add_argument("--fetch-omdb", action="store_true", help="Fetch OMDb metadata")
     parser.add_argument("--full-enrich", action="store_true", help="Run full enrichment (AI + OMDb)")
     parser.add_argument("--server", action="store_true", help="Start Web Viewer Server")
+    parser.add_argument("--bulk", action="store_true", help="Use text-based bulk enrichment (faster, uses gemini-2.0-flash)")
     
     args = parser.parse_args()
     
@@ -207,9 +208,15 @@ Examples:
         count = remove_missing_movies()
         logger.info(f"Cleanup complete: {count} missing movies removed")
     
+    
     if args.enrich:
-        count = enrich_with_ai(args.limit)
-        logger.info(f"AI enrichment complete: {count} movies processed")
+        if args.bulk:
+            from enricher import enrich_with_ai_bulk
+            count = enrich_with_ai_bulk(args.limit)
+            logger.info(f"Bulk AI enrichment complete: {count} movies processed")
+        else:
+            count = enrich_with_ai(args.limit)
+            logger.info(f"AI enrichment complete: {count} movies processed")
     
     if args.fetch_omdb:
         count = enrich_with_omdb(args.limit)

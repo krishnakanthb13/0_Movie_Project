@@ -57,6 +57,10 @@ COLUMNS = [
     # Metadata
     "created_at",
     "updated_at",
+    
+    # User User
+    "user_rating",
+    "user_tags"
 ]
 
 SQLITE_SCHEMA = """
@@ -89,7 +93,10 @@ CREATE TABLE IF NOT EXISTS movies (
     box_office      TEXT DEFAULT 'NA',
     
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    user_rating     TEXT,
+    user_tags       TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_full_path ON movies(full_path);
@@ -180,7 +187,34 @@ def init_sqlite() -> None:
     conn.executescript(SQLITE_SCHEMA)
     conn.commit()
     conn.close()
+    
+    # Run migrations
+    migrate_db()
+    
     logger.info(f"Initialized SQLite database: {SQLITE_FILE}")
+
+
+def migrate_db() -> None:
+    """Migrate database schema for new columns."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # Get existing columns
+    cursor.execute("PRAGMA table_info(movies)")
+    columns = {row["name"] for row in cursor.fetchall()}
+    
+    # Add user_rating if missing
+    if "user_rating" not in columns:
+        logger.info("Migrating: Adding user_rating column")
+        conn.execute("ALTER TABLE movies ADD COLUMN user_rating TEXT")
+        
+    # Add user_tags if missing
+    if "user_tags" not in columns:
+        logger.info("Migrating: Adding user_tags column")
+        conn.execute("ALTER TABLE movies ADD COLUMN user_tags TEXT")
+        
+    conn.commit()
+    conn.close()
 
 
 def get_existing_paths_sqlite() -> set:
@@ -307,7 +341,7 @@ def create_movie_record(file_info: Dict, parsed_name: str, parsed_year: str) -> 
         "file_name": file_info["file_name"],
         "directory": file_info["directory"],
         "full_path": file_info["full_path"],
-        "is_active": "0",  # Default to ignore
+        "is_active": "1",  # Default to active
         "extracted_name": parsed_name,
         "extracted_year": parsed_year,
         "ai_title": "NA",
@@ -326,6 +360,8 @@ def create_movie_record(file_info: Dict, parsed_name: str, parsed_year: str) -> 
         "poster": "NA",
         "imdb_rating": "NA",
         "box_office": "NA",
+        "user_rating": "NA",
+        "user_tags": "NA",
         "created_at": now,
         "updated_at": now,
     }

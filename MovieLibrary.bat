@@ -40,6 +40,8 @@ echo  ║   ENRICHMENT (Requires API Keys)                             ║
 echo  ║   [A] AI Enrichment (Gemini)                                 ║
 echo  ║   [B] OMDb Enrichment                                        ║
 echo  ║   [C] Full Enrichment (AI + OMDb)                            ║
+echo  ║   [K] Bulk AI Enrichment (Fast - Text Only)                  ║
+echo  ║   [L] Full Bulk Enrichment (Bulk AI + OMDb)                  ║
 echo  ║                                                              ║
 echo  ║   SERVER                                                     ║
 echo  ║   [S] Start Web Server                                       ║
@@ -67,6 +69,8 @@ if "%choice%"=="9" goto OPEN_DATA
 if /i "%choice%"=="A" goto AI_ENRICH
 if /i "%choice%"=="B" goto OMDB_ENRICH
 if /i "%choice%"=="C" goto FULL_ENRICH
+if /i "%choice%"=="K" goto BULK_AI_ENRICH
+if /i "%choice%"=="L" goto FULL_BULK_ENRICH
 if /i "%choice%"=="D" goto CLEANUP
 if /i "%choice%"=="S" goto START_SERVER
 if /i "%choice%"=="V" goto SETUP_ENV
@@ -178,6 +182,61 @@ if /i "%confirm%"=="Y" (
     python main.py --enrich --limit 10
 ) else (
     echo  Cancelled.
+)
+echo.
+pause
+goto MENU
+
+goto MENU
+
+:BULK_AI_ENRICH
+cls
+echo.
+echo  ========================================
+echo   BULK AI ENRICHMENT (Gemini 2.5 Flash)
+echo  ========================================
+echo.
+echo  This uses the text-based Gemini 2.5 Flash model.
+echo  It processes movies in chunks of 50 for speed.
+echo.
+set /p limit="  Enter limit (default 50, 'all' for all): "
+if "%limit%"=="" set limit=50
+
+if /i "%limit%"=="all" (
+    python main.py --enrich --bulk
+) else (
+    python main.py --enrich --bulk --limit %limit%
+)
+echo.
+pause
+goto MENU
+
+pause
+goto MENU
+
+:FULL_BULK_ENRICH
+cls
+echo.
+echo  ========================================
+echo   FULL BULK ENRICHMENT (Gemini + OMDb)
+echo  ========================================
+echo.
+echo  1. Bulk AI Identification (Gemini 2.5 Flash)
+echo  2. OMDb Metadata Fetch (Detailed Info)
+echo.
+set /p limit="  Enter limit (default 50, 'all' for all): "
+if "%limit%"=="" set limit=50
+
+if /i "%limit%"=="all" (
+    python main.py --enrich --bulk
+    echo.
+    echo  [Step 1 Complete] Starting OMDb fetch...
+    python main.py --fetch-omdb
+) else (
+    python main.py --enrich --bulk --limit %limit%
+    echo.
+    echo  [Step 1 Complete] Starting OMDb fetch...
+    python main.py --fetch-omdb --limit %limit%
 )
 echo.
 pause

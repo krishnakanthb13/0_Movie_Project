@@ -76,9 +76,12 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_error(400, "Invalid JSON")
             return
         
-        # Manual OMDb enrichment endpoint
         if path == "/api/manual-enrich":
             self.manual_enrich(data)
+            return
+
+        if path == "/api/update-metadata":
+            self.update_metadata(data)
             return
         
         self.send_error(404, "Endpoint not found")
@@ -157,6 +160,41 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
             
         except Exception as e:
             logger.error(f"Manual enrichment error: {e}")
+            self.send_json({"status": "error", "message": str(e)})
+
+    def update_metadata(self, data: Dict):
+        """Update user metadata (rating, tags)."""
+        try:
+            uuid_val = data.get("uuid")
+            if not uuid_val:
+                self.send_json({"status": "error", "message": "Missing movie UUID"})
+                return
+
+            updates = {}
+            if "user_rating" in data:
+                updates["user_rating"] = str(data["user_rating"])
+            if "user_tags" in data:
+                # Store as comma-separated string
+                tags = data["user_tags"]
+                if isinstance(tags, list):
+                    updates["user_tags"] = ",".join(tags)
+                else:
+                    updates["user_tags"] = str(tags)
+
+            if not updates:
+                self.send_json({"status": "error", "message": "No updates provided"})
+                return
+
+            update_sqlite_record(uuid_val, updates)
+            
+            # Sync to CSV if needed (optional for metadata but good for backup)
+            # all_movies = get_all_movies_sqlite()
+            # update_csv(all_movies)
+
+            self.send_json({"status": "success", "message": "Metadata updated"})
+            
+        except Exception as e:
+            logger.error(f"Metadata update error: {e}")
             self.send_json({"status": "error", "message": str(e)})
 
     def send_json(self, data: Any):
