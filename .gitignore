@@ -1,0 +1,22 @@
+# Environment files
+.env
+
+# Personal data and database
+data/
+*.db
+*.csv
+
+# Log files
+*.log
+movie_library.log
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDE and platform specific
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
