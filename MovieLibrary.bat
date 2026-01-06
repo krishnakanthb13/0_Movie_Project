@@ -40,7 +40,6 @@ echo  ║   ENRICHMENT (Requires API Keys)                             ║
 echo  ║   [A] AI Enrichment (Gemini)                                 ║
 echo  ║   [B] OMDb Enrichment                                        ║
 echo  ║   [C] Full Enrichment (AI + OMDb)                            ║
-echo  ║   [C] Full Enrichment (AI + OMDb)                            ║
 echo  ║   [K] Bulk AI Enrichment (Text-Only, User Configured Model)  ║
 echo  ║   [L] Full Bulk Enrichment (Bulk AI + OMDb)                  ║
 echo  ║                                                              ║
@@ -127,6 +126,8 @@ goto MENU
 :STATS
 cls
 echo.
+echo  Fetching Database Statistics...
+echo.
 python main.py --stats
 echo.
 pause
@@ -181,12 +182,15 @@ echo   AI ENRICHMENT (Gemini)
 echo  ========================================
 echo.
 echo  This requires GEMINI_API_KEY in .env
+echo  This requires GEMINI_API_KEY in .env
 echo.
-set /p confirm="  Continue? (Y/N): "
-if /i "%confirm%"=="Y" (
-    python main.py --enrich --limit 10
+set /p limit="  Enter limit (default 10, 'all' for all): "
+if "%limit%"=="" set limit=10
+
+if /i "%limit%"=="all" (
+    python main.py --enrich
 ) else (
-    echo  Cancelled.
+    python main.py --enrich --limit %limit%
 )
 echo.
 pause
@@ -198,11 +202,10 @@ goto MENU
 cls
 echo.
 echo  ========================================
-echo  ========================================
 echo   BULK AI ENRICHMENT (Configured Model)
 echo  ========================================
 echo.
-echo  This uses the configured AI model (default: gemini-2.5-flash).
+echo  This uses the configured AI model (Configured Model)
 echo  It processes movies in chunks of 50 for speed.
 echo.
 set /p limit="  Enter limit (default 50, 'all' for all): "
@@ -223,7 +226,6 @@ goto MENU
 :FULL_BULK_ENRICH
 cls
 echo.
-echo  ========================================
 echo  ========================================
 echo   FULL BULK ENRICHMENT (Gemini + OMDb)
 echo  ========================================
@@ -257,12 +259,15 @@ echo   OMDb ENRICHMENT
 echo  ========================================
 echo.
 echo  This requires OMDB_API_KEY in .env
+echo  This requires OMDB_API_KEY in .env
 echo.
-set /p confirm="  Continue? (Y/N): "
-if /i "%confirm%"=="Y" (
-    python main.py --fetch-omdb --limit 10
+set /p limit="  Enter limit (default 10, 'all' for all): "
+if "%limit%"=="" set limit=10
+
+if /i "%limit%"=="all" (
+    python main.py --fetch-omdb
 ) else (
-    echo  Cancelled.
+    python main.py --fetch-omdb --limit %limit%
 )
 echo.
 pause

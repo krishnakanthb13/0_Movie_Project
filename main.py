@@ -101,16 +101,25 @@ def show_stats() -> None:
     ai_enriched = sum(1 for r in sqlite_records if r.get("ai_title", "NA") != "NA")
     omdb_enriched = sum(1 for r in sqlite_records if r.get("title", "NA") != "NA")
     
-    active_count = sum(1 for r in sqlite_records if str(r.get("is_active", "0")) == "1")
+    # States
+    state_0 = sum(1 for r in sqlite_records if str(r.get("is_active", "0")) == "0")
+    state_1 = sum(1 for r in sqlite_records if str(r.get("is_active", "0")) == "1") # Pending AI
+    state_2 = sum(1 for r in sqlite_records if str(r.get("is_active", "0")) == "2") # Pending OMDb
+    state_3 = sum(1 for r in sqlite_records if str(r.get("is_active", "0")) == "3") # Success
+    state_4 = sum(1 for r in sqlite_records if str(r.get("is_active", "0")) == "4") # Failure
     
     print("\n" + "=" * 50)
     print("MOVIE LIBRARY STATISTICS")
     print("=" * 50)
     print(f"  Total Records:    {len(sqlite_records)}")
-    print(f"  Active (Enrich):  {active_count}")
     print(f"  AI Enriched:      {ai_enriched}")
     print(f"  OMDb Enriched:    {omdb_enriched}")
-    print(f"  Pending AI:       {active_count - (sum(1 for r in sqlite_records if r.get('ai_title', 'NA') != 'NA' and str(r.get('is_active', '0')) == '1'))}") 
+    print("-" * 50)
+    print(f"  [0] Ignored:      {state_0}")
+    print(f"  [1] Pending AI:   {state_1}")
+    print(f"  [2] Pending OMDb: {state_2}")
+    print(f"  [3] Success:      {state_3}")
+    print(f"  [4] Failed:       {state_4}") 
     print("=" * 50)
 
 

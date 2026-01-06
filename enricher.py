@@ -109,7 +109,8 @@ def enrich_with_ai(limit: Optional[int] = None) -> int:
             updates = {
                 "ai_title": result.get("movie_title", "NA"),
                 "ai_year": result.get("year", "NA"),
-                "ai_imdb_id": result.get("imdb_id", "NA")
+                "ai_imdb_id": result.get("imdb_id", "NA"),
+                "is_active": 2,  # Mark ready for OMDb enrichment
                 # Note: We do NOT update verified "imdb_id" here waiting for OMDb confirmation
             }
             
@@ -181,7 +182,8 @@ def enrich_with_ai_bulk(limit: Optional[int] = None) -> int:
                     updates = {
                         "ai_title": res.get("movie_title", "NA"),
                         "ai_year": res.get("year", "NA"),
-                        "ai_imdb_id": res.get("imdb_id", "NA")
+                        "ai_imdb_id": res.get("imdb_id", "NA"),
+                        "is_active": 2  # Mark ready for OMDb enrichment
                     }
                     
                     if updates["ai_title"] != "NA":
@@ -219,11 +221,8 @@ def enrich_with_omdb(limit: Optional[int] = None) -> int:
     movies = get_movies_without_omdb()
     
     # Also include movies that have AI title but no OMDb data
-    all_movies = get_all_movies_sqlite()
-    for movie in all_movies:
-        if movie.get("ai_title", "NA") != "NA" and movie.get("title", "NA") == "NA":
-            if movie not in movies:
-                movies.append(movie)
+    # (Checking for is_active 1/NA cases just in case, but they should be 2 now)
+
     
     if limit:
         movies = movies[:limit]
@@ -239,42 +238,24 @@ def enrich_with_omdb(limit: Optional[int] = None) -> int:
         logger.info(f"[{i+1}/{len(movies)}] Fetching OMDb data: {movie.get('ai_title', movie['file_name'])}")
         
         try:
-            ai_id = movie.get("ai_imdb_id", "NA")
             ai_title = movie.get("ai_title", "NA")
             ai_year = movie.get("ai_year", "NA")
 
-            # Fallback for legacy records that might have ID in imdb_id but not ai_imdb_id
-            if ai_id == "NA":
-                ai_id = movie.get("imdb_id", "NA")
+            # 1. Search by AI Title/Year directly (ignoring ID as per user request)
+            res = fetch_by_title(ai_title, ai_year)
             
-            result = {}
-            match_found = False
-            
-            # 1. Try with AI ID (if available)
-            if ai_id and ai_id != "NA":
-                res = fetch_by_imdb_id(ai_id)
-                # Check if valid response
-                if res.get("title") != "NA":
-                    # Verify Match
-                    if verify_match(ai_title, ai_year, res.get("title"), res.get("year")):
-                        result = res
-                        match_found = True
-                        logger.info(f"  -> Verified Match via ID: {ai_id}")
-                    else:
-                        logger.warning(f"  -> Mismatch via ID {ai_id}: AI({ai_title}) vs OMDb({res.get('title')}). Retrying search...")
-                else:
-                    logger.warning(f"  -> Invalid OMDb response for ID {ai_id}")
+            if res.get("title") != "NA":
+                result = res
+                match_found = True
+                logger.info(f"  -> Found via AI Title/Year: {result.get('title')}")
+            else:
+                 logger.warning(f"  -> No OMDb match found for AI Title: {ai_title}")
+                 match_found = False
 
-            # 2. Search by Title/Year if ID failed or mismatched
             if not match_found:
-                 res = fetch_by_title(ai_title, ai_year)
-                 if res.get("title") != "NA":
-                     result = res
-                     match_found = True
-                     logger.info(f"  -> Found via Search: {ai_title}")
-            
-            if not match_found:
-                 logger.warning("  -> No OMDb match found")
+                 # Mark as failed / manual intervention required
+                 update_sqlite_record(movie["uuid"], {"is_active": 4})
+                 enriched_count += 1 # Counted as processed, even if failed
                  continue
 
             # Update database
@@ -298,8 +279,8 @@ def enrich_with_omdb(limit: Optional[int] = None) -> int:
             if result.get("imdb_id", "NA") != "NA":
                 updates["imdb_id"] = result["imdb_id"]
             
-            # Mark as fully enriched (is_active = 2)
-            updates["is_active"] = 2
+            # Mark as SUCCESS (is_active = 3)
+            updates["is_active"] = 3
             
             update_sqlite_record(movie["uuid"], updates)
             enriched_count += 1

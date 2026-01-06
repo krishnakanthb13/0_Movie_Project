@@ -312,13 +312,12 @@ def get_unenriched_movies() -> List[Dict]:
 
 
 def get_movies_without_omdb() -> List[Dict]:
-    """Get movies that have IMDB ID but no OMDb data."""
+    """Get movies ready for OMDb enrichment (is_active = 2)."""
     init_sqlite()
     conn = get_db_connection()
     cursor = conn.execute("""
         SELECT * FROM movies 
-        WHERE is_active = 1 AND imdb_id != 'NA' AND imdb_id IS NOT NULL
-        AND (title = 'NA' OR title IS NULL)
+        WHERE is_active = 2
     """)
     movies = [dict(row) for row in cursor.fetchall()]
     conn.close()
