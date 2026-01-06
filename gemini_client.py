@@ -15,13 +15,13 @@ from typing import Dict, Optional
 from google import genai
 from google.genai import types
 
-from config import GEMINI_API_KEY, AI_REQUEST_DELAY
+from config import GEMINI_API_KEY, AI_REQUEST_DELAY, AI_MODEL, AI_SEARCH_MODEL
 
 logger = logging.getLogger(__name__)
 
 # Models
-MODEL_SEARCH = "gemini-2.5-flash-native-audio-preview-12-2025"  # Live API + Search
-MODEL_FORMATTER = "gemini-2.5-flash"                        # Structuring
+MODEL_SEARCH = AI_SEARCH_MODEL  # Live API + Search
+MODEL_FORMATTER = AI_MODEL      # Structuring
 
 # Configure Gemini client
 client = None

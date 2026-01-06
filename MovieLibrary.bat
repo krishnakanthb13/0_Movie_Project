@@ -40,7 +40,8 @@ echo  ║   ENRICHMENT (Requires API Keys)                             ║
 echo  ║   [A] AI Enrichment (Gemini)                                 ║
 echo  ║   [B] OMDb Enrichment                                        ║
 echo  ║   [C] Full Enrichment (AI + OMDb)                            ║
-echo  ║   [K] Bulk AI Enrichment (Fast - Text Only)                  ║
+echo  ║   [C] Full Enrichment (AI + OMDb)                            ║
+echo  ║   [K] Bulk AI Enrichment (Text-Only, User Configured Model)  ║
 echo  ║   [L] Full Bulk Enrichment (Bulk AI + OMDb)                  ║
 echo  ║                                                              ║
 echo  ║   SERVER                                                     ║
@@ -50,6 +51,8 @@ echo  ║   OTHER                                                      ║
 echo  ║   [V] Set Up Virtual Environment (UV)                        ║
 echo  ║   [T] Test Parser                                            ║
 echo  ║   [E] Edit .env File (API Keys)                              ║
+echo  ║   [H] Help (Show Command Line Usage)                         ║
+echo  ║   [R] Reset Data (Clear CSV and Database)                    ║
 echo  ║   [0] Exit                                                   ║
 echo  ║                                                              ║
 echo  ╚══════════════════════════════════════════════════════════════╝
@@ -76,6 +79,8 @@ if /i "%choice%"=="S" goto START_SERVER
 if /i "%choice%"=="V" goto SETUP_ENV
 if /i "%choice%"=="T" goto TEST_PARSER
 if /i "%choice%"=="E" goto EDIT_ENV
+if /i "%choice%"=="H" goto HELP
+if /i "%choice%"=="R" goto RESET
 if "%choice%"=="0" goto EXIT
 
 echo  Invalid option. Press any key to try again...
@@ -193,10 +198,11 @@ goto MENU
 cls
 echo.
 echo  ========================================
-echo   BULK AI ENRICHMENT (Gemini 2.5 Flash)
+echo  ========================================
+echo   BULK AI ENRICHMENT (Configured Model)
 echo  ========================================
 echo.
-echo  This uses the text-based Gemini 2.5 Flash model.
+echo  This uses the configured AI model (default: gemini-2.5-flash).
 echo  It processes movies in chunks of 50 for speed.
 echo.
 set /p limit="  Enter limit (default 50, 'all' for all): "
@@ -218,10 +224,11 @@ goto MENU
 cls
 echo.
 echo  ========================================
+echo  ========================================
 echo   FULL BULK ENRICHMENT (Gemini + OMDb)
 echo  ========================================
 echo.
-echo  1. Bulk AI Identification (Gemini 2.5 Flash)
+echo  1. Bulk AI Identification (Configured Model)
 echo  2. OMDb Metadata Fetch (Detailed Info)
 echo.
 set /p limit="  Enter limit (default 50, 'all' for all): "
@@ -313,6 +320,24 @@ goto MENU
 cls
 echo  Opening .env file...
 start "" notepad ".env"
+goto MENU
+
+:HELP
+cls
+echo.
+echo  ========================================
+echo   COMMAND LINE HELP
+echo  ========================================
+echo.
+python main.py --help
+echo.
+pause
+goto MENU
+
+:RESET
+cls
+python reset_data.py
+pause
 goto MENU
 
 :CLEANUP

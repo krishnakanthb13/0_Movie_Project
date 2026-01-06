@@ -169,7 +169,7 @@ Examples:
     parser.add_argument("--fetch-omdb", action="store_true", help="Fetch OMDb metadata")
     parser.add_argument("--full-enrich", action="store_true", help="Run full enrichment (AI + OMDb)")
     parser.add_argument("--server", action="store_true", help="Start Web Viewer Server")
-    parser.add_argument("--bulk", action="store_true", help="Use text-based bulk enrichment (faster, uses gemini-2.0-flash)")
+    parser.add_argument("--bulk", action="store_true", help="Use text-based bulk enrichment (faster, uses configured AI model)")
     
     args = parser.parse_args()
     

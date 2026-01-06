@@ -38,6 +38,7 @@ COLUMNS = [
     "ai_title",
     "ai_year",
     "imdb_id",
+    "ai_imdb_id",
     
     # OMDb metadata
     "title",
@@ -76,6 +77,7 @@ CREATE TABLE IF NOT EXISTS movies (
     
     ai_title        TEXT DEFAULT 'NA',
     ai_year         TEXT DEFAULT 'NA',
+    ai_imdb_id      TEXT DEFAULT 'NA',
     imdb_id         TEXT DEFAULT 'NA',
     
     title           TEXT DEFAULT 'NA',
@@ -212,6 +214,11 @@ def migrate_db() -> None:
     if "user_tags" not in columns:
         logger.info("Migrating: Adding user_tags column")
         conn.execute("ALTER TABLE movies ADD COLUMN user_tags TEXT")
+
+    # Add ai_imdb_id if missing
+    if "ai_imdb_id" not in columns:
+        logger.info("Migrating: Adding ai_imdb_id column")
+        conn.execute("ALTER TABLE movies ADD COLUMN ai_imdb_id TEXT DEFAULT 'NA'")
         
     conn.commit()
     conn.close()
@@ -346,6 +353,7 @@ def create_movie_record(file_info: Dict, parsed_name: str, parsed_year: str) -> 
         "extracted_year": parsed_year,
         "ai_title": "NA",
         "ai_year": "NA",
+        "ai_imdb_id": "NA",
         "imdb_id": "NA",
         "title": "NA",
         "year": "NA",

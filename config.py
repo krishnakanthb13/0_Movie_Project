@@ -63,7 +63,13 @@ OMDB_API_KEY = os.getenv("OMDB_API_KEY", "")
 AI_REQUEST_DELAY = 3.0
 
 # Batch size for processing
+# Batch size for processing
 BATCH_SIZE = 50
+
+# AI Models
+# Options: "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-3-flash-preview"
+AI_MODEL = "gemini-2.5-flash"
+AI_SEARCH_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025"
 
 # =============================================================================
 # SERVER SETTINGS

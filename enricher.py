@@ -17,7 +17,9 @@ from storage import (
     get_all_movies_sqlite
 )
 from gemini_client import identify_movie
-from omdb_client import fetch_movie_data
+from omdb_client import fetch_movie_data, fetch_by_imdb_id, fetch_by_title
+
+import re
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -27,6 +29,46 @@ file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
 file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
 logger.addHandler(file_handler)
+
+
+def verify_match(ai_title: str, ai_year: str, omdb_title: str, omdb_year: str) -> bool:
+    """
+    Verify if OMDb result matches AI suggestion.
+    """
+    if not omdb_title or omdb_title == "NA":
+        return False
+        
+    # Title Check
+    def normalize(s):
+        if not s: return ""
+        return re.sub(r'[^a-zA-Z0-9]', '', s.lower())
+        
+    t1 = normalize(ai_title)
+    t2 = normalize(omdb_title)
+    
+    # If one title is very short, be stricter
+    if len(t1) < 4 or len(t2) < 4:
+        title_match = t1 == t2
+    else:
+        title_match = (t1 in t2) or (t2 in t1)
+    
+    # Year Check
+    year_match = True
+    if ai_year and ai_year != "NA" and omdb_year and omdb_year != "NA":
+        try:
+            # Clean years (remove non-digits)
+            y1_str = re.sub(r'\D', '', str(ai_year))[:4]
+            y2_str = re.sub(r'\D', '', str(omdb_year))[:4]
+            
+            if y1_str and y2_str:
+                y1 = int(y1_str)
+                y2 = int(y2_str)
+                if abs(y1 - y2) > 1:
+                    year_match = False
+        except:
+            pass # Relax if parsing fails
+            
+    return title_match and year_match
 
 
 def enrich_with_ai(limit: Optional[int] = None) -> int:
@@ -67,7 +109,8 @@ def enrich_with_ai(limit: Optional[int] = None) -> int:
             updates = {
                 "ai_title": result.get("movie_title", "NA"),
                 "ai_year": result.get("year", "NA"),
-                "imdb_id": result.get("imdb_id", "NA")
+                "ai_imdb_id": result.get("imdb_id", "NA")
+                # Note: We do NOT update verified "imdb_id" here waiting for OMDb confirmation
             }
             
             update_sqlite_record(movie["uuid"], updates)
@@ -138,7 +181,7 @@ def enrich_with_ai_bulk(limit: Optional[int] = None) -> int:
                     updates = {
                         "ai_title": res.get("movie_title", "NA"),
                         "ai_year": res.get("year", "NA"),
-                        "imdb_id": res.get("imdb_id", "NA")
+                        "ai_imdb_id": res.get("imdb_id", "NA")
                     }
                     
                     if updates["ai_title"] != "NA":
@@ -196,13 +239,44 @@ def enrich_with_omdb(limit: Optional[int] = None) -> int:
         logger.info(f"[{i+1}/{len(movies)}] Fetching OMDb data: {movie.get('ai_title', movie['file_name'])}")
         
         try:
-            # Fetch from OMDb
-            result = fetch_movie_data(
-                imdb_id=movie.get("imdb_id", "NA"),
-                title=movie.get("ai_title", "NA"),
-                year=movie.get("ai_year", "NA")
-            )
+            ai_id = movie.get("ai_imdb_id", "NA")
+            ai_title = movie.get("ai_title", "NA")
+            ai_year = movie.get("ai_year", "NA")
+
+            # Fallback for legacy records that might have ID in imdb_id but not ai_imdb_id
+            if ai_id == "NA":
+                ai_id = movie.get("imdb_id", "NA")
             
+            result = {}
+            match_found = False
+            
+            # 1. Try with AI ID (if available)
+            if ai_id and ai_id != "NA":
+                res = fetch_by_imdb_id(ai_id)
+                # Check if valid response
+                if res.get("title") != "NA":
+                    # Verify Match
+                    if verify_match(ai_title, ai_year, res.get("title"), res.get("year")):
+                        result = res
+                        match_found = True
+                        logger.info(f"  -> Verified Match via ID: {ai_id}")
+                    else:
+                        logger.warning(f"  -> Mismatch via ID {ai_id}: AI({ai_title}) vs OMDb({res.get('title')}). Retrying search...")
+                else:
+                    logger.warning(f"  -> Invalid OMDb response for ID {ai_id}")
+
+            # 2. Search by Title/Year if ID failed or mismatched
+            if not match_found:
+                 res = fetch_by_title(ai_title, ai_year)
+                 if res.get("title") != "NA":
+                     result = res
+                     match_found = True
+                     logger.info(f"  -> Found via Search: {ai_title}")
+            
+            if not match_found:
+                 logger.warning("  -> No OMDb match found")
+                 continue
+
             # Update database
             updates = {
                 "title": result.get("title", "NA"),
@@ -220,7 +294,7 @@ def enrich_with_omdb(limit: Optional[int] = None) -> int:
                 "box_office": result.get("box_office", "NA")
             }
             
-            # Update imdb_id if we got it from OMDb
+            # Update verified imdb_id
             if result.get("imdb_id", "NA") != "NA":
                 updates["imdb_id"] = result["imdb_id"]
             
