@@ -34,7 +34,7 @@ SEARCH_PROMPT = """
 I have a video file: "{file_name}"
 Parsed as: {extracted_name} ({extracted_year})
 
-Please use Google Search to find the exact official Movie Title, Release Year, and IMDb ID (ttXXXXXXX).
+Please use Google Search to find the exact Official IMDB Movie Title, Release Year, and IMDb ID (ttXXXXXXX).
 Verify the IMDb ID is correct for this specific movie.
 Speak the details clearly so I can write them down.
 """

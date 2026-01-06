@@ -55,172 +55,184 @@
             min-height: 100vh;
         }
 
-        header {
+        /* Compact Header Premium Styles */
+        .compact-header {
+            background: rgba(13, 13, 20, 0.95);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding: 20px 30px;
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            border: 1px solid var(--border);
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 20px;
         }
 
-        h1 {
+        .branding h1 {
+            font-size: 1.6em;
             margin: 0;
-            font-size: 1.8em;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--accent) 0%, #ff79c6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            letter-spacing: -0.5px;
+            text-shadow: 0 0 20px rgba(187, 134, 252, 0.3);
         }
 
-        .stats {
-            color: var(--text-secondary);
-            font-size: 0.9em;
-            margin-top: 5px;
-        }
-
-        .header-right {
+        .header-actions {
             display: flex;
             gap: 10px;
             align-items: center;
         }
 
-        .controls {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            padding: 0 10px;
-            flex-wrap: wrap;
-        }
-
-        input[type="text"] {
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--border);
-            color: var(--text-primary);
-            padding: 12px 18px;
-            border-radius: 12px;
-            flex-grow: 1;
-            min-width: 250px;
-            font-size: 0.95em;
-            font-family: inherit;
+        .header-actions button {
+            padding: 8px 16px;
+            font-size: 0.85em;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            border-radius: 8px;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            font-weight: 500;
         }
 
-        input[type="text"]:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 20px var(--accent-glow);
+        .header-actions button:hover {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
         }
 
-        input[type="text"]::placeholder {
-            color: var(--text-secondary);
-        }
-
-        button {
-            background: linear-gradient(135deg, var(--accent) 0%, #9965f4 100%);
+        .header-actions button.active {
+            background: linear-gradient(135deg, var(--accent) 0%, #7b2cbf 100%);
             color: #fff;
             border: none;
-            padding: 10px 20px;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        /* Modernized Search & Filter Row */
+        .search-filters-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-container {
+            flex-grow: 10;
+            /* Maximize width */
+            min-width: 300px;
+            position: relative;
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 1em;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 10px;
+            color: #fff;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .search-container input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .search-container input:focus {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(187, 134, 252, 0.1);
+            outline: none;
+        }
+
+        .search-clear {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 1.5em;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .search-clear:hover {
+            color: #fff;
+        }
+
+        select {
+            background: rgba(25, 25, 35, 1);
+            /* Darker solid bg for readability */
+            color: #e0e0e0;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95em;
+            font-weight: 500;
             cursor: pointer;
-            font-weight: 600;
-            font-family: inherit;
-            font-size: 0.9em;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px var(--accent-glow);
-            white-space: nowrap;
+            outline: none;
+            min-width: 140px;
+            appearance: none;
+            /* Remove default arrow */
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 16px;
+            padding-right: 35px;
+            transition: all 0.2s ease;
         }
 
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px var(--accent-glow);
+        select:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            background-color: rgba(30, 30, 45, 1);
         }
 
-        /* Filter Tags Section */
-        .filter-section {
-            background: var(--glass);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            padding: 15px 20px;
-            margin-bottom: 20px;
+        select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(187, 134, 252, 0.1);
         }
 
-        .filter-row {
+        option {
+            background: #1a1a2e;
+            color: #fff;
+            padding: 10px;
+        }
+
+        .clear-filters-btn {
+            background: rgba(255, 82, 82, 0.1);
+            color: #ff5252;
+            border: 1px solid rgba(255, 82, 82, 0.2);
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-bottom: 10px;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 1.2em;
+            padding: 0;
+            transition: all 0.2s;
         }
 
-        .filter-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .filter-label {
-            font-size: 0.8em;
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            min-width: 70px;
-        }
-
-        .filter-tags {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .filter-tag {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text-secondary);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.8em;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: none;
-        }
-
-        .filter-tag:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-primary);
-            transform: none;
-        }
-
-        .filter-tag.active {
-            background: var(--accent);
-            color: #000;
-            border-color: var(--accent);
+        .clear-filters-btn:hover {
+            background: rgba(255, 82, 82, 0.2);
+            border-color: #ff5252;
+            transform: scale(1.05);
         }
 
         .toggle-btn {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-secondary);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: none;
-            padding: 8px 16px;
+            /* Reset old styles */
+            background: unset;
+            border: unset;
         }
 
-        .toggle-btn:hover {
-            background: rgba(255, 255, 255, 0.12);
-            color: var(--text-primary);
-            transform: none;
-        }
-
-        .toggle-btn.active {
-            background: var(--accent);
-            color: #000;
-        }
 
         .movie-grid {
             display: grid;
@@ -235,19 +247,24 @@
 
         .movie-card {
             background: var(--card-bg);
-            backdrop-filter: blur(10px);
+            /* Removed backdrop-filter for performance */
             border-radius: 16px;
             overflow: hidden;
             border: 1px solid var(--border);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
             display: flex;
             flex-direction: column;
             position: relative;
+            content-visibility: auto;
+            /* Optimization: skip off-screen rendering */
+            contain-intrinsic-size: 0 450px;
+            /* Estimated height to prevent scroll bar jumping */
+            will-change: transform;
         }
 
         .movie-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px var(--accent-glow);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
             background: var(--card-bg-hover);
             border-color: var(--accent);
         }
@@ -341,6 +358,12 @@
             background: rgba(255, 121, 198, 0.15);
         }
 
+        .tag.enriched {
+            color: #00e676;
+            background: rgba(0, 230, 118, 0.15);
+            border: 1px solid rgba(0, 230, 118, 0.3);
+        }
+
         .file-name {
             font-size: 0.75em;
             color: var(--text-secondary);
@@ -390,6 +413,23 @@
             background: rgba(255, 255, 255, 0.1);
             color: var(--text-primary);
             border-color: var(--text-secondary);
+            transform: none;
+        }
+
+        .folder-btn {
+            background: rgba(33, 150, 243, 0.1);
+            color: var(--info);
+            border: 1px solid rgba(33, 150, 243, 0.3);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.9em;
+            box-shadow: none;
+        }
+
+        .folder-btn:hover {
+            background: rgba(33, 150, 243, 0.2);
+            color: #fff;
+            border-color: var(--info);
             transform: none;
         }
 
@@ -477,7 +517,19 @@
         }
 
         .search-submit {
-            margin-top: 8px;
+            margin-top: 16px;
+            background: linear-gradient(135deg, var(--accent) 0%, #7b2cbf 100%);
+            width: 100%;
+            padding: 14px;
+            font-size: 1.1em;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(187, 134, 252, 0.4);
+        }
+
+        .search-submit:hover {
+            background: linear-gradient(135deg, #d4a5ff 0%, #9d4edd 100%);
+            box-shadow: 0 6px 20px rgba(187, 134, 252, 0.6);
+            transform: translateY(-2px);
         }
 
         .loading {
@@ -678,48 +730,189 @@
             .filter-section {
                 padding: 12px;
             }
+
+            .filter-section {
+                padding: 12px;
+            }
+        }
+
+        /* List View Styles */
+        /* List View Styles */
+        .movie-grid.list-view {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            /* Very small gap */
+        }
+
+        .movie-grid.list-view .movie-card {
+            flex-direction: row;
+            height: auto;
+            align-items: center;
+            padding: 8px 15px;
+            /* Minimal padding */
+            transform: none !important;
+            border-radius: 8px;
+            /* Slightly smaller radius */
+            min-height: 50px;
+        }
+
+        .movie-grid.list-view .poster-container {
+            display: none !important;
+            /* Hide posters as requested */
+        }
+
+        .movie-grid.list-view .card-content {
+            flex-direction: row;
+            align-items: center;
+            padding: 0;
+            gap: 20px;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .movie-grid.list-view .movie-title {
+            margin-bottom: 0;
+            font-size: 0.95em;
+            /* Slightly smaller font */
+            flex: 2;
+        }
+
+        .movie-grid.list-view .movie-meta {
+            margin-bottom: 0;
+            flex: 1;
+            display: flex;
+            gap: 6px;
+        }
+
+        .movie-grid.list-view .file-name {
+            display: none;
+        }
+
+        .movie-grid.list-view .card-actions {
+            flex-shrink: 0;
+            transform: scale(0.9);
+            /* Slightly smaller buttons */
+        }
+
+        /* Wall View Styles (Dense Images) */
+        .movie-grid.wall-view {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .movie-grid.wall-view .movie-card {
+            border-radius: 8px;
+        }
+
+        .movie-grid.wall-view .poster-container {
+            height: 220px;
+            /* Taller aspect ratio for wall */
+        }
+
+        .movie-grid.wall-view .card-content {
+            display: none;
+            /* Hide text in wall view */
+        }
+
+        /* Show minimal overlay on hover in wall view */
+        .movie-grid.wall-view .movie-card:hover .card-content {
+            display: flex;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 10px;
+            z-index: 10;
+        }
+
+        /* Clear Button Styles */
+        .search-container {
+            position: relative;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 0;
+            box-shadow: none;
+            display: none;
+        }
+
+        .search-clear:hover {
+            color: var(--text-primary);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .clear-filters-btn {
+            background: rgba(255, 87, 87, 0.1);
+            color: #ff5757;
+            border: 1px solid rgba(255, 87, 87, 0.3);
+            font-size: 0.8em;
+            padding: 4px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: none;
+            /* Hidden by default */
+            margin-left: auto;
+        }
+
+        .clear-filters-btn:hover {
+            background: rgba(255, 87, 87, 0.2);
+            transform: none;
         }
     </style>
 </head>
 
 <body>
-
     <div class="container">
-        <header>
-            <div>
-                <h1>🎬 Movie Library</h1>
-                <div class="stats" id="stats">Loading library...</div>
+        <div class="compact-header">
+            <div class="header-row">
+                <div class="branding">
+                    <h1>🎬 Movie Library</h1>
+                    <div class="stats" id="stats">Loading library...</div>
+                </div>
+                <div class="header-actions">
+                    <a href="enrichment.html" style="text-decoration:none;"><button class="toggle-btn"
+                            title="Manage Enrichment">⚙ Manage</button></a>
+                    <button class="toggle-btn" id="viewToggle" onclick="cycleView()">👁️ View</button>
+                    <button class="toggle-btn" id="posterToggle" onclick="togglePosters()">🖼️ Posters</button>
+                    <button class="toggle-btn" id="imageToggle" onclick="toggleAutoImages()">⚡ Auto Images: OFF</button>
+                    <button onclick="loadMovies()">↻ Refresh</button>
+                </div>
             </div>
-            <div class="header-right">
-                <button class="toggle-btn" id="posterToggle" onclick="togglePosters()">🖼️ Posters</button>
-                <button onclick="loadMovies()">↻ Refresh</button>
-            </div>
-        </header>
 
-        <div class="controls">
-            <input type="text" id="searchInput" placeholder="🔍 Search movies by title, year, genre, actors..."
-                onkeyup="filterMovies()">
-        </div>
+            <div class="search-filters-row">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="🔍 Search title, actor, genre..."
+                        onkeyup="filterMovies()">
+                    <button id="searchClear" class="search-clear" onclick="clearSearch()">&times;</button>
+                </div>
 
-        <!-- Filter Section -->
-        <div class="filter-section" id="filterSection">
-            <div class="filter-row">
-                <span class="filter-label">Genres:</span>
-                <div class="filter-tags" id="genreTags">
-                    <!-- Populated dynamically -->
-                </div>
-            </div>
-            <div class="filter-row">
-                <span class="filter-label">Years:</span>
-                <div class="filter-tags" id="yearTags">
-                    <!-- Populated dynamically -->
-                </div>
-            </div>
-            <div class="filter-row">
-                <span class="filter-label">Languages:</span>
-                <div class="filter-tags" id="langTags">
-                    <!-- Populated dynamically -->
-                </div>
+                <select id="genreSelect" onchange="updateFilterFromSelect('genre', this.value)">
+                    <option value="">All Genres</option>
+                </select>
+
+                <select id="yearSelect" onchange="updateFilterFromSelect('year', this.value)">
+                    <option value="">All Years</option>
+                </select>
+
+                <select id="langSelect" onchange="updateFilterFromSelect('language', this.value)">
+                    <option value="">All Languages</option>
+                </select>
+
+                <button class="clear-filters-btn" id="clearFiltersBtn" onclick="clearAllFilters()"
+                    title="Reset all filters">✖</button>
             </div>
         </div>
 
@@ -737,9 +930,7 @@
                 </div>
                 <button class="modal-close" onclick="closeModal()">&times;</button>
             </div>
-            <div class="modal-body" id="modalBody">
-                <!-- Content will be dynamically inserted -->
-            </div>
+            <div class="modal-body" id="modalBody"><!-- Content will be dynamically inserted --></div>
         </div>
     </div>
 
@@ -753,10 +944,8 @@
                 <button class="modal-close" onclick="closeSearchModal()">&times;</button>
             </div>
             <div class="search-modal-body">
-                <div class="search-hint">
-                    Enter movie details to search OMDb. Use IMDb ID (e.g., tt0133093) for best results,
-                    or enter title and year.
-                </div>
+                <div class="search-hint">Enter movie details to search OMDb. Use IMDb ID (e.g., tt0133093) for best
+                    results, or enter title and year. </div>
                 <div class="search-form">
                     <input type="hidden" id="searchMovieUuid">
                     <div class="search-input-group">
@@ -781,7 +970,15 @@
     <script>
         let allMovies = [];
         let showPosters = true;
-        let activeFilters = { genre: null, year: null, language: null };
+        let isListView = false;
+        let autoLoadImages = false;
+
+
+        let activeFilters = {
+            genre: null, year: null, language: null
+        }
+
+            ;
 
         async function loadMovies() {
             const container = document.getElementById('movieContainer');
@@ -800,7 +997,9 @@
                 updateStats();
                 populateFilters();
                 renderMovies(allMovies);
-            } catch (error) {
+            }
+
+            catch (error) {
                 console.error('Error loading movies:', error);
                 container.innerHTML = '<div class="loading">❌ Error loading movies. Is the server running?</div>';
             }
@@ -809,7 +1008,8 @@
         function updateStats() {
             const count = allMovies.length;
             const enriched = allMovies.filter(m => m.imdb_id && m.imdb_id !== 'NA').length;
-            const complete = allMovies.filter(m => m.is_active == 2).length;
+            const complete = allMovies.filter(m => m.is_active == 3).length;
+
             document.getElementById('stats').textContent = `${count} movies • ${enriched} with IMDb • ${complete} fully enriched`;
         }
 
@@ -823,44 +1023,100 @@
                 if (m.genre && m.genre !== 'NA') {
                     m.genre.split(',').forEach(g => genres.add(g.trim()));
                 }
+
                 const year = m.year !== 'NA' ? m.year : m.extracted_year;
+
                 if (year && year !== 'NA') {
                     const decade = Math.floor(parseInt(year) / 10) * 10;
-                    if (decade >= 1950 && decade <= 2020) {
-                        years.add(decade + 's');
-                    }
+                    if (decade >= 1950 && decade <= 2020) years.add(decade + 's');
                 }
+
                 if (m.language && m.language !== 'NA') {
                     m.language.split(',').forEach(l => languages.add(l.trim()));
                 }
             });
 
-            // Populate genre tags (top 12)
-            const genreContainer = document.getElementById('genreTags');
-            const topGenres = [...genres].slice(0, 12);
-            genreContainer.innerHTML = topGenres.map(g =>
-                `<button class="filter-tag" onclick="toggleFilter('genre', '${g}')">${g}</button>`
-            ).join('');
+            // Populate Genre Dropdown
+            const genreSelect = document.getElementById('genreSelect');
+            genreSelect.innerHTML = '<option value="">Genres: All</option>';
+            [...genres].sort().forEach(g => {
+                genreSelect.innerHTML += `<option value="${g}">${g}</option>`;
+            });
 
-            // Populate year tags
-            const yearContainer = document.getElementById('yearTags');
-            const sortedYears = [...years].sort().reverse();
-            yearContainer.innerHTML = sortedYears.map(y =>
-                `<button class="filter-tag" onclick="toggleFilter('year', '${y}')">${y}</button>`
-            ).join('');
+            // Populate Year Dropdown
+            const yearSelect = document.getElementById('yearSelect');
+            yearSelect.innerHTML = '<option value="">Years: All</option>';
+            [...years].sort().reverse().forEach(y => {
+                yearSelect.innerHTML += `<option value="${y}">${y}</option>`;
+            });
 
-            // Populate language tags (top 8)
-            const langContainer = document.getElementById('langTags');
-            const topLangs = [...languages].slice(0, 8);
-            langContainer.innerHTML = topLangs.map(l =>
-                `<button class="filter-tag" onclick="toggleFilter('language', '${l}')">${l}</button>`
-            ).join('');
+            // Populate Language Dropdown
+            const langSelect = document.getElementById('langSelect');
+            langSelect.innerHTML = '<option value="">Language: All</option>';
+            [...languages].sort().forEach(l => {
+                langSelect.innerHTML += `<option value="${l}">${l}</option>`;
+            });
+
+            filterMovies();
+        }
+
+        function updateFilterFromSelect(type, value) {
+            activeFilters[type] = value || null;
+
+            // Show clear button if any filter is active
+            const hasActive = Object.values(activeFilters).some(v => v !== null && v !== "");
+            document.getElementById('clearFiltersBtn').style.display = hasActive ? 'block' : 'none';
+
+            filterMovies();
+        }
+        function toggleView(mode) {
+            const container = document.getElementById('movieContainer');
+            const btn = document.getElementById('viewToggle');
+
+            if (mode === 'list') {
+                container.classList.add('list-view');
+                container.classList.remove('wall-view');
+                btn.textContent = '⊞ Grid';
+                isListView = true;
+            } else { // 'grid' mode
+                container.classList.remove('list-view');
+                container.classList.remove('wall-view');
+                btn.textContent = '☰ List';
+                isListView = false;
+            }
+        }
+
+        function cycleView() {
+            const container = document.getElementById('movieContainer');
+            if (container.classList.contains('list-view')) {
+                toggleView('grid');
+            } else {
+                toggleView('list');
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            filterMovies();
+        }
+
+        function clearAllFilters() {
+            activeFilters = { genre: null, year: null, language: null };
+
+            document.getElementById('genreSelect').value = "";
+            document.getElementById('yearSelect').value = "";
+            document.getElementById('langSelect').value = "";
+            document.getElementById('clearFiltersBtn').style.display = 'none';
+
+            filterMovies();
         }
 
         function toggleFilter(type, value) {
             if (activeFilters[type] === value) {
                 activeFilters[type] = null;
-            } else {
+            }
+
+            else {
                 activeFilters[type] = value;
             }
 
@@ -868,6 +1124,7 @@
             document.querySelectorAll(`.filter-tag`).forEach(btn => {
                 btn.classList.remove('active');
             });
+
             Object.entries(activeFilters).forEach(([key, val]) => {
                 if (val) {
                     document.querySelectorAll(`.filter-tag`).forEach(btn => {
@@ -879,6 +1136,19 @@
             filterMovies();
         }
 
+        function toggleAutoImages() {
+            autoLoadImages = !autoLoadImages;
+            const btn = document.getElementById('imageToggle');
+            if (autoLoadImages) {
+                btn.classList.add('active');
+                btn.textContent = '⚡ Auto Images: ON';
+            } else {
+                btn.classList.remove('active');
+                btn.textContent = '⚡ Auto Images: OFF';
+            }
+            filterMovies();
+        }
+
         function togglePosters() {
             showPosters = !showPosters;
             const btn = document.getElementById('posterToggle');
@@ -887,7 +1157,9 @@
             if (showPosters) {
                 btn.classList.remove('active');
                 container.classList.remove('no-posters');
-            } else {
+            }
+
+            else {
                 btn.classList.add('active');
                 container.classList.add('no-posters');
             }
@@ -927,51 +1199,49 @@
 
                 // Poster with lazy loading
                 let posterHtml = '';
+
                 if (showPosters) {
                     if (poster) {
-                        posterHtml = `
-                            <div class="poster-container">
-                                <img data-src="${poster}" class="poster-img" alt="${escapeHtml(title)}" 
-                                     onclick="loadPosterImage(this)"
-                                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                                <div class="poster-placeholder" style="display:none">🎬</div>
-                                <div class="poster-placeholder" onclick="loadPosterImage(this.previousElementSibling.previousElementSibling)" 
-                                     style="cursor:pointer;font-size:1.5em;" title="Click to load poster">🖼️ Click to load</div>
-                            </div>`;
+                        if (autoLoadImages) {
+                            posterHtml = `<div class="poster-container"><img src="${poster}" class="poster-img loaded" alt="${escapeHtml(title)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="poster-placeholder" style="display:none">🎬</div></div>`;
+                        } else {
+                            posterHtml = ` <div class="poster-container" > <img data-src="${poster}" class="poster-img" alt="${escapeHtml(title)}"
+                            onclick="loadPosterImage(this)"
+                            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" > <div class="poster-placeholder" style="display:none" >🎬</div> <div class="poster-placeholder" onclick="loadPosterImage(this.previousElementSibling.previousElementSibling)"
+                            style="cursor:pointer;font-size:1.5em;" title="Click to load poster" >🖼️ Click to load</div> </div>`;
+                        }
                     } else {
-                        posterHtml = `
-                            <div class="poster-container">
-                                <div class="poster-placeholder">🎬</div>
-                            </div>`;
+                        posterHtml = ` <div class="poster-container" > <div class="poster-placeholder" >🎬</div> </div>`;
                     }
                 }
 
                 const hasOmdbData = movie.title !== 'NA' || movie.plot !== 'NA';
 
-                card.innerHTML = `
-                    ${posterHtml}
+                card.innerHTML = `${posterHtml}
                     <div class="card-content">
                         <div class="movie-title">${escapeHtml(title || 'Unknown Title')}</div>
                         <div class="movie-meta">
                             ${year && year !== 'NA' ? `<span class="tag year">${year}</span>` : ''}
                             ${rating ? `<span class="tag rating">⭐ ${rating}</span>` : ''}
                             ${genre ? `<span class="tag genre">${genre}</span>` : ''}
-                            ${movie.imdb_id && movie.imdb_id !== 'NA' ? '<span class="tag hd">IMDb</span>' : ''}
+                            ${movie.is_active == 3 ? '<span class="tag enriched">✔ Enriched</span>' : ''}
+                            ${movie.imdb_id && movie.imdb_id !== 'NA' && movie.is_active != 3 ? '<span class="tag hd">IMDb</span>' : ''}
                         </div>
                         <div class="file-name" title="${escapeHtml(movie.file_name)}">${escapeHtml(movie.file_name)}</div>
                         <div class="card-actions">
                             <button class="play-btn" onclick="playMovie('${movie.uuid}')">▶ Play</button>
+                            <button class="folder-btn" onclick="openFolder('${movie.uuid}')" title="Open Folder">📂</button>
                             <button class="search-btn" onclick="openSearchModal('${movie.uuid}', '${escapeHtml(movie.extracted_name || '')}', '${movie.extracted_year || ''}')">🔍</button>
                             ${hasOmdbData ? `<button class="info-btn" onclick='showInfo(${JSON.stringify(movie).replace(/'/g, "&#39;")})'>ℹ</button>` : ''}
                         </div>
-                    </div>
-                `;
+                    </div>`;
                 container.appendChild(card);
             });
 
             if (movies.length > 100) {
                 const more = document.createElement('div');
                 more.className = 'loading';
+
                 more.textContent = `📚 And ${movies.length - 100} more... (refine your search)`;
                 container.appendChild(more);
             }
@@ -980,15 +1250,20 @@
         function loadPosterImage(img) {
             if (img.tagName !== 'IMG') return;
             const src = img.getAttribute('data-src');
+
             if (src && !img.src) {
                 img.src = src;
+
                 img.onload = () => {
                     img.classList.add('loaded');
+
                     // Hide the "click to load" placeholder
                     if (img.nextElementSibling && img.nextElementSibling.nextElementSibling) {
                         img.nextElementSibling.nextElementSibling.style.display = 'none';
                     }
-                };
+                }
+
+                    ;
             }
         }
 
@@ -1011,20 +1286,14 @@
                 const genre = (movie.genre || '').toLowerCase();
                 const actors = (movie.actors || '').toLowerCase();
 
-                const matchesQuery = !query ||
-                    title.includes(query) ||
-                    aiTitle.includes(query) ||
-                    file.includes(query) ||
-                    extracted.includes(query) ||
-                    genre.includes(query) ||
-                    actors.includes(query);
+                const matchesQuery = !query || title.includes(query) || aiTitle.includes(query) || file.includes(query) || extracted.includes(query) || genre.includes(query) || actors.includes(query);
 
                 // Filter by genre
-                const matchesGenre = !activeFilters.genre ||
-                    (movie.genre && movie.genre.includes(activeFilters.genre));
+                const matchesGenre = !activeFilters.genre || (movie.genre && movie.genre.includes(activeFilters.genre));
 
                 // Filter by year/decade
                 let matchesYear = !activeFilters.year;
+
                 if (activeFilters.year) {
                     const decade = parseInt(activeFilters.year);
                     const movieYear = parseInt(movie.year !== 'NA' ? movie.year : movie.extracted_year);
@@ -1032,11 +1301,25 @@
                 }
 
                 // Filter by language
-                const matchesLang = !activeFilters.language ||
-                    (movie.language && movie.language.includes(activeFilters.language));
+                const matchesLang = !activeFilters.language || (movie.language && movie.language.includes(activeFilters.language));
 
                 return matchesQuery && matchesGenre && matchesYear && matchesLang;
             });
+
+            // Toggle search clear button
+            const clearBtn = document.getElementById('searchClear');
+
+            if (clearBtn) {
+                clearBtn.style.display = query.length > 0 ? 'block' : 'none';
+            }
+
+            // Toggle active filters row
+            const hasActiveFilters = Object.values(activeFilters).some(v => v !== null);
+            const activeFiltersRow = document.getElementById('activeFiltersRow');
+
+            if (activeFiltersRow) {
+                activeFiltersRow.style.display = hasActiveFilters ? 'flex' : 'none';
+            }
 
             renderMovies(filtered);
         }
@@ -1050,77 +1333,112 @@
             title.textContent = displayTitle || 'Movie Details';
 
             const posterHtml = movie.poster && movie.poster !== 'NA'
-                ? `<img src="${movie.poster}" class="modal-poster" alt="${escapeHtml(displayTitle)}">`
-                : '';
+                ? `<img src = "${movie.poster}" class="modal-poster" alt = "${escapeHtml(displayTitle)}" > ` : '';
 
-            const infoItems = [
-                { label: 'Year', value: movie.year },
-                { label: 'Runtime', value: movie.runtime },
-                { label: 'Genre', value: movie.genre },
-                { label: 'Director', value: movie.director },
-                { label: 'Actors', value: movie.actors },
-                { label: 'Language', value: movie.language },
-                { label: 'Country', value: movie.country },
-                { label: 'IMDb Rating', value: movie.imdb_rating !== 'NA' ? `⭐ ${movie.imdb_rating}` : 'NA' },
-                { label: 'IMDb ID', value: movie.imdb_id },
-                { label: 'Box Office', value: movie.box_office },
-                { label: 'Awards', value: movie.awards },
+            const infoItems = [{
+                label: 'Year', value: movie.year
+            }
+
+                ,
+            {
+                label: 'Runtime', value: movie.runtime
+            }
+
+                ,
+            {
+                label: 'Genre', value: movie.genre
+            }
+
+                ,
+            {
+                label: 'Director', value: movie.director
+            }
+
+                ,
+            {
+                label: 'Actors', value: movie.actors
+            }
+
+                ,
+            {
+                label: 'Language', value: movie.language
+            }
+
+                ,
+            {
+                label: 'Country', value: movie.country
+            }
+
+                ,
+            {
+
+                label: 'IMDb Rating',
+                value: movie.imdb_rating !== 'NA' ? `⭐ ${movie.imdb_rating}` : 'NA'
+            }
+
+                ,
+            {
+                label: 'IMDb ID', value: movie.imdb_id
+            }
+
+                ,
+            {
+                label: 'Box Office', value: movie.box_office
+            }
+
+                ,
+            {
+                label: 'Awards', value: movie.awards
+            }
+
+                ,
             ].filter(item => item.value && item.value !== 'NA');
 
             // Parse Additional Info Text
             let additionalInfoHtml = '';
+
             if (movie.additional_info && movie.additional_info !== 'NA') {
                 const lines = movie.additional_info.split('\n');
+
                 const additionalItems = lines.map(line => {
                     // Match **Key**: Value
                     const match = line.match(/\*\*(.*?)\*\*:(.*)/);
+
                     if (match) {
-                        return { label: match[1], value: match[2].trim() };
+                        return {
+                            label: match[1], value: match[2].trim()
+                        }
+
+                            ;
                     }
+
                     return null;
                 }).filter(item => item !== null);
 
                 if (additionalItems.length > 0) {
-                    additionalInfoHtml = `
-                     <div class="info-item" style="grid-column: 1 / -1; margin-top: 10px;">
-                        <div class="info-label" style="font-size: 0.85em; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px;">Additional Details</div>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                            ${additionalItems.map(item => `
-                                <div>
-                                    <div class="info-label">${item.label}</div>
-                                    <div class="info-value">${escapeHtml(item.value)}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                     </div>
-                     `;
+                    additionalInfoHtml = ` <div class="info-item" style = "grid-column: 1 / -1; margin-top: 10px;" ><div class="info-label" style="font-size: 0.85em; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px;">Additional Details</div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">${additionalItems.map(item => `<div> <div class="info-label" >${item.label}</div> <div class="info-value" >${escapeHtml(item.value)}</div> </div> `).join('')}</div></div>`;
                 }
             }
 
             const plotHtml = movie.plot && movie.plot !== 'NA'
-                ? `<div class="plot-section">
-                        <div class="info-label">Plot</div>
-                        <div class="info-value">${escapeHtml(movie.plot)}</div>
-                   </div>`
+                ? `<div class="plot-section"><div class="info-label">Plot</div><div class="info-value">${escapeHtml(movie.plot)}</div></div>`
                 : '';
 
-            body.innerHTML = `
-                ${posterHtml}
-                <div class="info-grid">
-                    ${infoItems.map(item => `
-                        <div class="info-item">
-                            <div class="info-label">${item.label}</div>
-                            <div class="info-value">${escapeHtml(item.value)}</div>
-                        </div>
-                    `).join('')}
-                    ${additionalInfoHtml}
-                </div>
-                ${plotHtml}
-                <div class="info-item" style="margin-top: 16px;">
-                    <div class="info-label">File Path</div>
-                    <div class="info-value" style="word-break: break-all; font-size: 0.85em;">${escapeHtml(movie.full_path)}</div>
-                </div>
-            `;
+            body.innerHTML = `${posterHtml}
+            <div class="info-grid">
+                ${infoItems.map(item => `
+                    <div class="info-item">
+                        <div class="info-label">${item.label}</div>
+                        <div class="info-value">${escapeHtml(item.value)}</div>
+                    </div>
+                `).join('')}
+                ${additionalInfoHtml}
+            </div>
+            ${plotHtml}
+            <div class="info-item" style="margin-top: 16px;">
+                <div class="info-label">File Path</div>
+                <div class="info-value" style="word-break: break-all; font-size: 0.85em;">${escapeHtml(movie.full_path)}</div>
+            </div>`;
 
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -1145,16 +1463,36 @@
             try {
                 const response = await fetch(`/play?id=${uuid}`);
                 const result = await response.json();
+
+                if (result.status === 'success') {
+                    console.log(result.message);
+                }
+
+                else {
+                    alert('Error: ' + result.message);
+                }
+            }
+
+            catch (error) {
+                console.error('Play error:', error);
+                alert('Failed to send play request');
+            }
+        }
+
+        async function openFolder(uuid) {
+            try {
+                const response = await fetch(`/api/open-folder?id=${uuid}`);
+                const result = await response.json();
                 if (result.status === 'success') {
                     console.log(result.message);
                 } else {
                     alert('Error: ' + result.message);
                 }
             } catch (error) {
-                console.error('Play error:', error);
-                alert('Failed to send play request');
+                console.error('Folder open error:', error);
             }
         }
+
 
         // ============================================
         // Manual OMDb Search Functions
@@ -1176,7 +1514,9 @@
             // Focus the IMDb ID field
             setTimeout(() => {
                 document.getElementById('searchImdbId').focus();
-            }, 100);
+            }
+
+                , 100);
         }
 
         function closeSearchModal(event) {
@@ -1204,10 +1544,13 @@
 
             try {
                 const response = await fetch('/api/manual-enrich', {
+
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
-                    },
+                    }
+
+                    ,
                     body: JSON.stringify({
                         uuid: uuid,
                         imdb_id: imdbId,
@@ -1225,10 +1568,11 @@
                     setTimeout(() => {
                         closeSearchModal();
                         loadMovies();
-                    }, 1500);
-                } else {
-                    resultDiv.innerHTML = `<div class="search-result error">❌ ${result.message}</div>`;
+                    }
+
+                        , 1500);
                 }
+
             } catch (error) {
                 console.error('Search error:', error);
                 resultDiv.innerHTML = '<div class="search-result error">❌ Failed to connect to server.</div>';
@@ -1238,7 +1582,6 @@
         // Initial load
         loadMovies();
     </script>
-
 </body>
 
 </html>

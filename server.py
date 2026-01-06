@@ -43,6 +43,14 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
             else:
                 self.send_error(400, "Missing movie ID")
             return
+
+        if path == "/api/open-folder":
+            uuid_val = query.get("id", [None])[0]
+            if uuid_val:
+                self.open_folder(uuid_val)
+            else:
+                self.send_error(400, "Missing movie ID")
+            return
             
         if path == "/":
             self.path = "/index.html"
@@ -251,6 +259,32 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
                 
         except Exception as e:
             logger.error(f"Error launching VLC: {e}")
+            self.send_error(500, str(e))
+
+    def open_folder(self, uuid_val: str):
+        """Open movie folder in explorer."""
+        try:
+            movie = get_movie_by_uuid(uuid_val)
+            if not movie:
+                self.send_error(404, "Movie not found")
+                return
+            
+            full_path = movie.get("full_path")
+            if not full_path:
+                self.send_error(404, "File path not found")
+                return
+
+            full_path_obj = Path(full_path).resolve()
+            if not full_path_obj.exists():
+                self.send_error(404, "File does not exist on disk")
+                return
+            
+            # Windows specific: select file in explorer
+            subprocess.Popen(f'explorer /select,"{full_path_obj}"')
+            self.send_json({"status": "success", "message": f"Opened folder for {movie['file_name']}"})
+                
+        except Exception as e:
+            logger.error(f"Error opening folder: {e}")
             self.send_error(500, str(e))
 
 
