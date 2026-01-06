@@ -217,7 +217,15 @@ http://localhost:8010
 
 ## 📄 License
 
-MIT License - Created for local media management enthusiasts.
+This project is licensed under the **GNU General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
+
+**In brief:**
+- ✅ You can freely use, modify, and distribute this software
+- ✅ You can use it for commercial purposes
+- ⚠️ Any modifications must also be open-sourced under GPL v3
+- ⚠️ No warranty is provided
+
+For the full license text, see: https://www.gnu.org/licenses/gpl-3.0.html
 
 ---
 
