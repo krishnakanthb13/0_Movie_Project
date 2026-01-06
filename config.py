@@ -68,7 +68,7 @@ BATCH_SIZE = 50
 
 # AI Models
 # Options: "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-3-flash-preview"
-AI_MODEL = "gemini-2.5-flash"
+AI_MODEL = "gemini-2.5-flash-lite"
 AI_SEARCH_MODEL = "gemini-2.5-flash-native-audio-preview-12-2025"
 
 # =============================================================================

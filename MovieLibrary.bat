@@ -35,11 +35,12 @@ echo  ║   [7] Sync CSV to SQLite                                     ║
 echo  ║   [8] Open CSV File                                          ║
 echo  ║   [9] Open Data Folder                                       ║
 echo  ║   [D] Cleanup (Remove deleted movies)                        ║
+echo  ║   [M] Clean Movie Titles (Global Word Removal)               ║
 echo  ║                                                              ║
 echo  ║   ENRICHMENT (Requires API Keys)                             ║
 echo  ║   [A] AI Enrichment (Gemini)                                 ║
 echo  ║   [B] OMDb Enrichment                                        ║
-echo  ║   [C] Full Enrichment (AI + OMDb)                            ║
+echo  ║   [C] Full Enrichment (AI + OMDb) - Line by Line             ║
 echo  ║   [K] Bulk AI Enrichment (Text-Only, User Configured Model)  ║
 echo  ║   [L] Full Bulk Enrichment (Bulk AI + OMDb)                  ║
 echo  ║                                                              ║
@@ -74,6 +75,7 @@ if /i "%choice%"=="C" goto FULL_ENRICH
 if /i "%choice%"=="K" goto BULK_AI_ENRICH
 if /i "%choice%"=="L" goto FULL_BULK_ENRICH
 if /i "%choice%"=="D" goto CLEANUP
+if /i "%choice%"=="M" goto CLEAN_NAMES
 if /i "%choice%"=="S" goto START_SERVER
 if /i "%choice%"=="V" goto SETUP_ENV
 if /i "%choice%"=="T" goto TEST_PARSER
@@ -362,6 +364,31 @@ echo.
 set /p confirm="  Remove these movies from database? (Y/N): "
 if /i "%confirm%"=="Y" (
     python main.py --cleanup
+) else (
+    echo  Cancelled.
+)
+echo.
+pause
+goto MENU
+
+:CLEAN_NAMES
+cls
+echo.
+echo  ========================================
+echo   CLEAN MOVIE TITLES
+echo  ========================================
+echo.
+echo  This utility analyzes all movies for recurring words 
+echo  (like YTS, RARBG, 1080p, etc.) that might have been 
+echo  parsed as part of the title.
+echo.
+echo  Step 1: Perform dry run (find recurring words)
+echo.
+python clean_names.py
+echo.
+set /p apply="  Do you want to apply these removals to the database? (Y/N): "
+if /i "%apply%"=="Y" (
+    python clean_names.py --apply
 ) else (
     echo  Cancelled.
 )

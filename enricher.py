@@ -272,7 +272,8 @@ def enrich_with_omdb(limit: Optional[int] = None) -> int:
                 "awards": result.get("awards", "NA"),
                 "poster": result.get("poster", "NA"),
                 "imdb_rating": result.get("imdb_rating", "NA"),
-                "box_office": result.get("box_office", "NA")
+                "box_office": result.get("box_office", "NA"),
+                "additional_info": result.get("additional_info", "NA")
             }
             
             # Update verified imdb_id

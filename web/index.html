@@ -790,7 +790,7 @@
             try {
                 const response = await fetch('/api/movies');
                 allMovies = await response.json();
-                
+
                 // Randomize movies
                 for (let i = allMovies.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
@@ -1067,6 +1067,36 @@
                 { label: 'Awards', value: movie.awards },
             ].filter(item => item.value && item.value !== 'NA');
 
+            // Parse Additional Info Text
+            let additionalInfoHtml = '';
+            if (movie.additional_info && movie.additional_info !== 'NA') {
+                const lines = movie.additional_info.split('\n');
+                const additionalItems = lines.map(line => {
+                    // Match **Key**: Value
+                    const match = line.match(/\*\*(.*?)\*\*:(.*)/);
+                    if (match) {
+                        return { label: match[1], value: match[2].trim() };
+                    }
+                    return null;
+                }).filter(item => item !== null);
+
+                if (additionalItems.length > 0) {
+                    additionalInfoHtml = `
+                     <div class="info-item" style="grid-column: 1 / -1; margin-top: 10px;">
+                        <div class="info-label" style="font-size: 0.85em; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px;">Additional Details</div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                            ${additionalItems.map(item => `
+                                <div>
+                                    <div class="info-label">${item.label}</div>
+                                    <div class="info-value">${escapeHtml(item.value)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                     </div>
+                     `;
+                }
+            }
+
             const plotHtml = movie.plot && movie.plot !== 'NA'
                 ? `<div class="plot-section">
                         <div class="info-label">Plot</div>
@@ -1083,6 +1113,7 @@
                             <div class="info-value">${escapeHtml(item.value)}</div>
                         </div>
                     `).join('')}
+                    ${additionalInfoHtml}
                 </div>
                 ${plotHtml}
                 <div class="info-item" style="margin-top: 16px;">

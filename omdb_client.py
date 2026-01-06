@@ -119,7 +119,8 @@ def get_default_response() -> Dict:
         "poster": "NA",
         "imdb_rating": "NA",
         "box_office": "NA",
-        "imdb_id": "NA"
+        "imdb_id": "NA",
+        "additional_info": "NA"
     }
 
 
@@ -133,6 +134,35 @@ def parse_omdb_response(data: Dict) -> Dict:
     Returns:
         Dict with normalized field names
     """
+    # Keys that we already map to specific columns
+    captured_keys = {
+        "Title", "Year", "Genre", "Director", "Actors", "Plot",
+        "Runtime", "Language", "Country", "Awards", "Poster",
+        "imdbRating", "BoxOffice", "imdbID", "Response", "Type"
+    }
+
+    # Collect additional info
+    additional_info_lines = []
+    
+    # Process Ratings separately to format nicely if needed, or just let them fall through 
+    # But usually Ratings is a list of dicts. Let's handle special cases or just all others.
+    
+    for key, value in data.items():
+        if key not in captured_keys:
+             # Handle list/dict types if necessary (like Ratings)
+             if isinstance(value, list):
+                 for item in value:
+                     if isinstance(item, dict):
+                         # Example: Source: Value
+                         parts = [f"{k}: {v}" for k,v in item.items()]
+                         additional_info_lines.append(" | ".join(parts))
+             elif isinstance(value, dict):
+                 pass # Simple implementation ignores complex nested dicts for now
+             else:
+                 additional_info_lines.append(f"**{key}**: {value}")
+
+    additional_info_str = "\n".join(additional_info_lines)
+
     return {
         "title": data.get("Title", "NA"),
         "year": data.get("Year", "NA"),
@@ -147,7 +177,8 @@ def parse_omdb_response(data: Dict) -> Dict:
         "poster": data.get("Poster", "NA"),
         "imdb_rating": data.get("imdbRating", "NA"),
         "box_office": data.get("BoxOffice", "NA"),
-        "imdb_id": data.get("imdbID", "NA")
+        "imdb_id": data.get("imdbID", "NA"),
+        "additional_info": additional_info_str
     }
 
 

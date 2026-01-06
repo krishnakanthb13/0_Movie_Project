@@ -54,6 +54,7 @@ COLUMNS = [
     "poster",
     "imdb_rating",
     "box_office",
+    "additional_info",
     
     # Metadata
     "created_at",
@@ -93,6 +94,7 @@ CREATE TABLE IF NOT EXISTS movies (
     poster          TEXT DEFAULT 'NA',
     imdb_rating     TEXT DEFAULT 'NA',
     box_office      TEXT DEFAULT 'NA',
+    additional_info TEXT DEFAULT 'NA',
     
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -219,6 +221,11 @@ def migrate_db() -> None:
     if "ai_imdb_id" not in columns:
         logger.info("Migrating: Adding ai_imdb_id column")
         conn.execute("ALTER TABLE movies ADD COLUMN ai_imdb_id TEXT DEFAULT 'NA'")
+
+    # Add additional_info if missing
+    if "additional_info" not in columns:
+        logger.info("Migrating: Adding additional_info column")
+        conn.execute("ALTER TABLE movies ADD COLUMN additional_info TEXT DEFAULT 'NA'")
         
     conn.commit()
     conn.close()
@@ -367,6 +374,7 @@ def create_movie_record(file_info: Dict, parsed_name: str, parsed_year: str) -> 
         "poster": "NA",
         "imdb_rating": "NA",
         "box_office": "NA",
+        "additional_info": "NA",
         "user_rating": "NA",
         "user_tags": "NA",
         "created_at": now,
