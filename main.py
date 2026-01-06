@@ -1,6 +1,44 @@
 """
 Movie Library Project - Main Entry Point
-Orchestrates scanning, parsing, storage, and enrichment operations.
+=========================================
+
+Central orchestrator for all Movie Library operations.
+
+This is the main entry point for the Movie Library system, providing
+a command-line interface (CLI) for all operations:
+
+Scan Operations:
+    --scan              Scan directory for video files
+    --limit N           Limit items to process
+    --check-missing     Preview files that no longer exist
+    --cleanup           Remove missing file entries from database
+
+Enrichment Operations:
+    --enrich            Run AI enrichment (Gemini)
+    --bulk              Use bulk mode with --enrich (faster)
+    --fetch-omdb        Run OMDb enrichment
+    --full-enrich       Run complete pipeline (AI + OMDb)
+
+Database Operations:
+    --sync              Sync CSV to SQLite
+    --stats             Show database statistics
+    --sample N          Show N sample records
+
+Server Operations:
+    --server            Start web server
+
+Usage Examples:
+    python main.py --scan                    # Scan all movies
+    python main.py --scan --limit 50         # Scan first 50
+    python main.py --enrich --limit 10       # AI enrich 10 movies
+    python main.py --enrich --bulk           # Bulk AI enrichment
+    python main.py --fetch-omdb              # Fetch OMDb metadata
+    python main.py --full-enrich             # Complete pipeline
+    python main.py --server                  # Start web viewer
+    python main.py --stats                   # Show statistics
+
+Dependencies:
+    All project modules: config, scanner, parser, storage, enricher
 """
 
 import sys
@@ -26,27 +64,58 @@ from storage import (
 )
 from enricher import enrich_with_ai, enrich_with_omdb, full_enrichment
 
-# Configure logging
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+# Configure logging for console output and file persistence.
+# All operations are logged to movie_library.log for debugging.
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler("movie_library.log", encoding="utf-8")
+        logging.StreamHandler(sys.stdout),       # Console output
+        logging.FileHandler("movie_library.log", encoding="utf-8")  # File log
     ]
 )
 logger = logging.getLogger(__name__)
 
 
+# =============================================================================
+# SCAN OPERATION
+# =============================================================================
+
 def run_scan(limit: int = None) -> int:
     """
     Scan directory for videos and index them.
     
+    Recursively scans MOVIE_DIRECTORY for video files, parses each
+    filename to extract title and year, and saves records to both
+    CSV and SQLite storage.
+    
     Args:
-        limit: Optional limit on number of files to process
-        
+        limit (int, optional): Maximum number of files to process.
+                               If None, processes all discovered files.
+                               Useful for testing or partial scans.
+    
     Returns:
-        Number of new movies indexed
+        int: Number of NEW movies indexed (duplicates are skipped).
+    
+    Processing Steps:
+        1. Iterate through all video files in MOVIE_DIRECTORY
+        2. Parse each filename to extract title and year
+        3. Create movie record with UUID and metadata
+        4. Save to storage (CSV + SQLite)
+    
+    Side Effects:
+        - Creates/updates CSV_FILE
+        - Creates/updates SQLITE_FILE
+        - Sets is_active=1 for new records (pending AI enrichment)
+    
+    Example:
+        >>> new_count = run_scan(limit=100)
+        >>> print(f"Indexed {new_count} new movies")
     """
     logger.info("=" * 60)
     logger.info("MOVIE LIBRARY - FILE SCAN")
@@ -57,11 +126,12 @@ def run_scan(limit: int = None) -> int:
     records = []
     count = 0
     
+    # Iterate through discovered video files
     for file_info in scan_directory(MOVIE_DIRECTORY):
-        # Parse filename
+        # Parse filename to extract title and year
         name, year = parse_filename(file_info["file_name"])
         
-        # Create record
+        # Create complete movie record
         record = create_movie_record(file_info, name, year)
         records.append(record)
         count += 1
@@ -75,9 +145,10 @@ def run_scan(limit: int = None) -> int:
             logger.info(f"Reached limit of {limit} files")
             break
     
-    # Save to storage
+    # Save all records to storage
     new_count = save_movies(records)
     
+    # Summary logging
     logger.info("=" * 60)
     logger.info(f"Scan complete!")
     logger.info(f"  Total processed: {count}")
@@ -89,11 +160,38 @@ def run_scan(limit: int = None) -> int:
     return new_count
 
 
+# =============================================================================
+# STATISTICS DISPLAY
+# =============================================================================
+
 def show_stats() -> None:
-    """Display current database statistics."""
+    """
+    Display current database statistics.
+    
+    Shows comprehensive statistics about the movie database including:
+    - Total record count
+    - AI enrichment count
+    - OMDb enrichment count
+    - Breakdown by is_active state
+    
+    Args:
+        None
+    
+    Returns:
+        None (prints to stdout)
+    
+    State Meanings:
+        0 = Ignored (will not be processed)
+        1 = Pending AI enrichment
+        2 = Pending OMDb enrichment
+        3 = Successfully enriched
+        4 = Failed (needs manual intervention)
+    """
+    # Ensure storage is initialized
     init_csv()
     init_sqlite()
     
+    # Read current data
     csv_records = read_csv()
     sqlite_records = get_all_movies_sqlite()
     
@@ -101,13 +199,14 @@ def show_stats() -> None:
     ai_enriched = sum(1 for r in sqlite_records if r.get("ai_title", "NA") != "NA")
     omdb_enriched = sum(1 for r in sqlite_records if r.get("title", "NA") != "NA")
     
-    # States
+    # Count by state
     state_0 = sum(1 for r in sqlite_records if str(r.get("is_active", "0")) == "0")
-    state_1 = sum(1 for r in sqlite_records if str(r.get("is_active", "0")) == "1") # Pending AI
-    state_2 = sum(1 for r in sqlite_records if str(r.get("is_active", "0")) == "2") # Pending OMDb
-    state_3 = sum(1 for r in sqlite_records if str(r.get("is_active", "0")) == "3") # Success
-    state_4 = sum(1 for r in sqlite_records if str(r.get("is_active", "0")) == "4") # Failure
+    state_1 = sum(1 for r in sqlite_records if str(r.get("is_active", "0")) == "1")
+    state_2 = sum(1 for r in sqlite_records if str(r.get("is_active", "0")) == "2")
+    state_3 = sum(1 for r in sqlite_records if str(r.get("is_active", "0")) == "3")
+    state_4 = sum(1 for r in sqlite_records if str(r.get("is_active", "0")) == "4")
     
+    # Display statistics
     print("\n" + "=" * 50)
     print("MOVIE LIBRARY STATISTICS")
     print("=" * 50)
@@ -123,8 +222,28 @@ def show_stats() -> None:
     print("=" * 50)
 
 
+# =============================================================================
+# SAMPLE DISPLAY
+# =============================================================================
+
 def show_sample(count: int = 10) -> None:
-    """Show sample records from database."""
+    """
+    Show sample records from the database.
+    
+    Displays a preview of movies in the database with their
+    extracted and enriched data.
+    
+    Args:
+        count (int): Number of records to display (default: 10).
+    
+    Returns:
+        None (prints to stdout)
+    
+    Display Format:
+        - Title (Year)
+        - Original filename
+        - IMDb rating (if available)
+    """
     movies = get_all_movies_sqlite()
     
     print(f"\nShowing {min(count, len(movies))} of {len(movies)} movies:\n")
@@ -137,6 +256,7 @@ def show_sample(count: int = 10) -> None:
         ai_title = movie.get("ai_title", "NA")
         imdb = movie.get("imdb_rating", "NA")
         
+        # Prefer AI title over extracted name
         display_title = ai_title if ai_title != "NA" else name
         
         print(f"  {display_title} ({year})")
@@ -146,8 +266,36 @@ def show_sample(count: int = 10) -> None:
         print("-" * 80)
 
 
+# =============================================================================
+# MAIN ENTRY POINT
+# =============================================================================
+
 def main():
-    """Main entry point with CLI."""
+    """
+    Main entry point with CLI argument parsing.
+    
+    Parses command-line arguments and dispatches to appropriate
+    handler functions.
+    
+    Supported Commands:
+        --scan              Scan for videos
+        --limit N           Limit processing count
+        --stats             Show statistics
+        --sample N          Show sample records
+        --sync              Sync CSV to SQLite
+        --check-missing     Preview missing files
+        --cleanup           Remove missing entries
+        --enrich            AI enrichment
+        --bulk              Bulk AI mode
+        --fetch-omdb        OMDb enrichment
+        --full-enrich       Complete pipeline
+        --server            Start web server
+    
+    Exit Behavior:
+        Returns to shell after operation completes.
+        Server mode runs until Ctrl+C.
+    """
+    # Set up argument parser with description and examples
     parser = argparse.ArgumentParser(
         description="Movie Library Indexing System",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -167,39 +315,74 @@ Examples:
         """
     )
     
-    parser.add_argument("--scan", action="store_true", help="Scan directory for videos")
-    parser.add_argument("--limit", type=int, help="Limit number of items to process")
-    parser.add_argument("--stats", action="store_true", help="Show database statistics")
-    parser.add_argument("--sample", type=int, metavar="N", help="Show N sample records")
-    parser.add_argument("--sync", action="store_true", help="Sync CSV to SQLite")
-    parser.add_argument("--cleanup", action="store_true", help="Remove movies with missing files from database")
-    parser.add_argument("--check-missing", action="store_true", help="Check for movies with missing files (preview only)")
-    parser.add_argument("--enrich", action="store_true", help="Enrich movies with Gemini AI")
-    parser.add_argument("--fetch-omdb", action="store_true", help="Fetch OMDb metadata")
-    parser.add_argument("--full-enrich", action="store_true", help="Run full enrichment (AI + OMDb)")
-    parser.add_argument("--server", action="store_true", help="Start Web Viewer Server")
-    parser.add_argument("--bulk", action="store_true", help="Use text-based bulk enrichment (faster, uses configured AI model)")
+    # -----------------------------------------------------------------
+    # ARGUMENT DEFINITIONS
+    # -----------------------------------------------------------------
     
+    # Scan operations
+    parser.add_argument("--scan", action="store_true", 
+                        help="Scan directory for videos")
+    parser.add_argument("--limit", type=int, 
+                        help="Limit number of items to process")
+    
+    # Database operations
+    parser.add_argument("--stats", action="store_true", 
+                        help="Show database statistics")
+    parser.add_argument("--sample", type=int, metavar="N", 
+                        help="Show N sample records")
+    parser.add_argument("--sync", action="store_true", 
+                        help="Sync CSV to SQLite")
+    
+    # Cleanup operations
+    parser.add_argument("--cleanup", action="store_true", 
+                        help="Remove movies with missing files from database")
+    parser.add_argument("--check-missing", action="store_true", 
+                        help="Check for movies with missing files (preview only)")
+    
+    # Enrichment operations
+    parser.add_argument("--enrich", action="store_true", 
+                        help="Enrich movies with Gemini AI")
+    parser.add_argument("--fetch-omdb", action="store_true", 
+                        help="Fetch OMDb metadata")
+    parser.add_argument("--full-enrich", action="store_true", 
+                        help="Run full enrichment (AI + OMDb)")
+    parser.add_argument("--bulk", action="store_true", 
+                        help="Use text-based bulk enrichment (faster, uses configured AI model)")
+    
+    # Server operations
+    parser.add_argument("--server", action="store_true", 
+                        help="Start Web Viewer Server")
+    
+    # Parse arguments
     args = parser.parse_args()
     
-    # Default action if no args
+    # -----------------------------------------------------------------
+    # DEFAULT ACTION (no arguments)
+    # -----------------------------------------------------------------
     if not any(vars(args).values()):
         parser.print_help()
         return
     
-    # Execute actions
+    # -----------------------------------------------------------------
+    # COMMAND DISPATCH
+    # -----------------------------------------------------------------
+    
+    # Server (handled first as it runs indefinitely)
     if args.server:
         from server import run_server
         run_server()
         return
 
+    # Scan operation
     if args.scan:
         run_scan(args.limit)
     
+    # Sync operation
     if args.sync:
         sync_csv_to_sqlite()
         logger.info("Sync complete!")
     
+    # Check missing files (preview)
     if args.check_missing:
         missing = get_missing_movie_paths()
         if missing:
@@ -213,35 +396,45 @@ Examples:
         else:
             print("\n✅ All movies in database exist on disk!")
     
+    # Cleanup operation
     if args.cleanup:
         count = remove_missing_movies()
         logger.info(f"Cleanup complete: {count} missing movies removed")
     
-    
+    # AI enrichment
     if args.enrich:
         if args.bulk:
+            # Use bulk mode (faster, single API call)
             from enricher import enrich_with_ai_bulk
             count = enrich_with_ai_bulk(args.limit)
             logger.info(f"Bulk AI enrichment complete: {count} movies processed")
         else:
+            # Use standard mode (more accurate)
             count = enrich_with_ai(args.limit)
             logger.info(f"AI enrichment complete: {count} movies processed")
     
+    # OMDb enrichment
     if args.fetch_omdb:
         count = enrich_with_omdb(args.limit)
         logger.info(f"OMDb enrichment complete: {count} movies processed")
     
+    # Full enrichment pipeline
     if args.full_enrich:
         results = full_enrichment(args.limit)
         logger.info(f"Full enrichment complete: AI={results['ai_enriched']}, OMDb={results['omdb_enriched']}")
     
+    # Statistics display
     if args.stats:
         show_stats()
     
+    # Sample display
     if args.sample:
         show_sample(args.sample)
 
 
+# =============================================================================
+# SCRIPT EXECUTION
+# =============================================================================
+
 if __name__ == "__main__":
     main()
-
