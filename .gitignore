@@ -15,6 +15,16 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# Python distribution / packaging
+dist/
+build/
+*.egg-info/
+
 # IDE and platform specific
 .vscode/
 .idea/

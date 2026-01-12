@@ -1,5 +1,7 @@
 # 🎬 Movie Library Manager
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+
 A robust, AI-powered system for indexing, enriching, and viewing your local movie collection.
 
 ---
@@ -231,6 +233,7 @@ For the full license text, see: https://www.gnu.org/licenses/gpl-3.0.html
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please see the code documentation in:
-- `context_readme.md` - Project philosophy and design goals
-- `code_readme.md` - Technical implementation details
+Contributions are welcome! Please see the documentation in:
+- [DESIGN_PHILOSOPHY.md](DESIGN_PHILOSOPHY.md) - Project philosophy and design goals
+- [CODE_DOCUMENTATION.md](CODE_DOCUMENTATION.md) - Technical implementation details
+- [CONTRIBUTING.md](CONTRIBUTING.md) - Guidelines for contributors

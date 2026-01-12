@@ -1,42 +1,54 @@
-# 💻 Code Functionality
+# 💻 Technical Documentation
 
-This document provides technical details about each module, their dependencies, parameters, and how they interconnect.
+This document provides technical details about each module, their dependencies, parameters, and how they interconnect in the **Movie Library Manager**.
 
 ---
 
 ## Architecture Overview
 
+```mermaid
+graph TD
+    A[main.py CLI ENTRY] --> B[scanner.py File Scan]
+    A --> C[parser.py Regex Parsing]
+    A --> D[enricher.py Workflow]
+    D --> E[gemini_client.py AI API]
+    D --> F[omdb_client.py REST API]
+    D --> G[storage.py CSV/SQLite]
+    G --> H[server.py HTTP API]
+    H --> I[web/index.html Frontend]
+```
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                           main.py                                    │
 │                    (CLI Entry Point & Orchestrator)                  │
-└─────────────┬───────────────┬───────────────┬───────────────────────┘
-              │               │               │
-              v               v               v
-┌─────────────┴───┐   ┌───────┴─────┐   ┌─────┴───────────┐
-│   scanner.py    │   │  parser.py  │   │   enricher.py   │
-│  (File System)  │   │  (Regex)    │   │  (Orchestrator) │
-└────────┬────────┘   └──────┬──────┘   └────┬────────────┘
-         │                   │               │
-         └─────────┬─────────┘               │
-                   │                         │
-                   v               ┌─────────┴──────┬──────────┐
-          ┌────────┴────────┐      │                │          │
-          │   storage.py    │<─────┤   gemini_      │  omdb_   │
-          │  (CSV/SQLite)   │      │   client.py    │ client.py│
-          └────────┬────────┘      │   (AI API)     │ (REST)   │
-                   │               └────────────────┴──────────┘
-                   v
-          ┌────────┴────────┐
-          │    server.py    │
-          │   (HTTP API)    │
-          └────────┬────────┘
-                   │
-                   v
-          ┌────────┴────────┐
-          │  web/index.html │
-          │   (Frontend)    │
-          └─────────────────┘
+│└─────────────┬───────────────┬───────────────┬───────────────────────┘
+│              │               │               │
+│              v               v               v
+│┌─────────────┴───┐   ┌───────┴─────┐   ┌─────┴───────────┐
+││   scanner.py    │   │  parser.py  │   │   enricher.py   │
+││  (File System)  │   │  (Regex)    │   │  (Orchestrator) │
+│└────────┬────────┘   └──────┬──────┘   └────┬────────────┘
+│         │                   │               │
+│         └─────────┬─────────┘               │
+│                   │                         │
+│                   v               ┌─────────┴──────┬──────────┐
+│          ┌────────┴────────┐      │                │          │
+│          │   storage.py    │<─────┤   gemini_      │  omdb_   │
+│          │  (CSV/SQLite)   │      │   client.py    │ client.py│
+│          └────────┬────────┘      │   (AI API)     │ (REST)   │
+│                   │               └────────────────┴──────────┘
+│                   v
+│          ┌────────┴────────┐
+│          │    server.py    │
+│          │   (HTTP API)    │
+│          └────────┬────────┘
+│                   │
+│                   v
+│          ┌────────┴────────┐
+│          │  web/index.html │
+│          │   (Frontend)    │
+│          └─────────────────┘
 ```
 
 ---
@@ -194,22 +206,10 @@ Step 2: JSON Formatter
 | `get_client()` | None | `genai.Client` | Singleton client instance |
 | `get_search_transcript(file_name, extracted_name, extracted_year)` | `str, str, str` | `str` | Async Live API call |
 | `format_with_gemma(transcript)` | `str` | `Dict` | Format transcript to JSON |
-| `extract_fallback(text)` | `str` | `Dict` | Regex fallback for IMDb ID |
 | `identify_movie_async(...)` | `str, str, str` | `Dict` | Full async pipeline |
 | `identify_movie(...)` | `str, str, str` | `Dict` | Sync wrapper |
 | `batch_identify_movies(movies, delay)` | `list, float` | `list` | Sequential processing |
 | `identify_movies_bulk(movies)` | `list` | `list` | Single API call bulk mode |
-
-**Output Format**:
-```json
-{
-  "movie_title": "The Matrix",
-  "year": "1999",
-  "imdb_id": "tt0133093",
-  "confidence": "high",
-  "reasoning": "Based on Google Search..."
-}
-```
 
 **Dependencies**: `google-genai`, `asyncio`, `config.py`
 
@@ -229,13 +229,6 @@ Step 2: JSON Formatter
 | `parse_omdb_response(data)` | `Dict` | `Dict` | Normalize OMDb → internal schema |
 | `fetch_movie_data(imdb_id, title, year)` | `str, str, str` | `Dict` | Combined fetch with fallback |
 
-**Output Fields**:
-```
-title, year, genre, director, actors, plot, runtime,
-language, country, awards, poster, imdb_rating, box_office,
-imdb_id, additional_info
-```
-
 **Dependencies**: `requests`, `config.py`
 
 ---
@@ -248,7 +241,6 @@ imdb_id, additional_info
 
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
-| `verify_match(ai_title, ai_year, omdb_title, omdb_year)` | `str x4` | `bool` | Title/year fuzzy matching |
 | `enrich_with_ai(limit)` | `int or None` | `int` | Process pending AI enrichments |
 | `enrich_with_ai_bulk(limit)` | `int or None` | `int` | Bulk mode (50 per call) |
 | `enrich_with_omdb(limit)` | `int or None` | `int` | Process pending OMDb enrichments |
@@ -256,15 +248,13 @@ imdb_id, additional_info
 | `sync_sqlite_to_csv()` | None | None | Sync database to CSV |
 
 **Workflow**:
-```
-1. Get movies with is_active=1
-2. Call gemini_client.identify_movie()
-3. Update AI fields, set is_active=2
-4. Get movies with is_active=2
-5. Call omdb_client.fetch_movie_data()
-6. Update OMDb fields, set is_active=3 (or 4 if failed)
+1. Get movies with `is_active=1`
+2. Call `gemini_client.identify_movie()`
+3. Update AI fields, set `is_active=2`
+4. Get movies with `is_active=2`
+5. Call `omdb_client.fetch_movie_data()`
+6. Update OMDb fields, set `is_active=3` (or 4 if failed)
 7. Sync SQLite → CSV
-```
 
 **Dependencies**: `gemini_client.py`, `omdb_client.py`, `storage.py`, `config.py`
 
@@ -285,13 +275,6 @@ imdb_id, additional_info
 | POST | `/api/manual-enrich` | `{uuid, imdb_id, title, year}` | Updates movie via OMDb |
 | POST | `/api/update-metadata` | `{uuid, user_rating, user_tags}` | Updates user fields |
 
-**Content Types Served**:
-- `.html` → `text/html`
-- `.css` → `text/css`
-- `.js` → `application/javascript`
-- `.png` → `image/png`
-- `.ico` → `image/x-icon`
-
 **Dependencies**: `http.server`, `subprocess`, `storage.py`, `omdb_client.py`, `config.py`
 
 ---
@@ -307,7 +290,6 @@ imdb_id, additional_info
 | `--scan` | Scan directory for videos |
 | `--limit N` | Limit items to process |
 | `--stats` | Show database statistics |
-| `--sample N` | Show N sample records |
 | `--sync` | Sync CSV to SQLite |
 | `--check-missing` | Preview missing files |
 | `--cleanup` | Remove missing entries |
@@ -316,43 +298,6 @@ imdb_id, additional_info
 | `--fetch-omdb` | OMDb enrichment |
 | `--full-enrich` | Full pipeline |
 | `--server` | Start web server |
-
-**Dependencies**: All modules
-
----
-
-### 10. `web/index.html` - Frontend SPA
-
-**Purpose**: Single-page application for browsing movies.
-
-**Key Features**:
-
-| Feature | Implementation |
-|---------|----------------|
-| Movie Grid | CSS Grid with auto-fill |
-| Lazy Loading | `data-src` + click-to-load |
-| Filters | Client-side filtering (no API calls) |
-| Search | Real-time text matching |
-| Poster Toggle | Hide posters for performance |
-| View Modes | Grid, List, Wall via CSS classes |
-| Info Modal | Dynamic content injection |
-| Search Modal | Manual OMDb search interface |
-| Randomization | Fisher-Yates shuffle on load |
-
-**API Calls**:
-- `GET /api/movies` - Load all movies
-- `GET /play?id={uuid}` - Play button
-- `GET /api/open-folder?id={uuid}` - Folder button
-- `POST /api/manual-enrich` - Search modal submit
-
-**CSS Variables**:
-```css
---bg-color: #0a0a0f        /* Deep black */
---card-bg: rgba(30,30,46,0.8)
---accent: #bb86fc          /* Purple */
---success: #4caf50
---warning: #ffc107
-```
 
 ---
 
@@ -383,41 +328,28 @@ imdb_id, additional_info
     web/index.html ──────────> Visual Display
 ```
 
+## Environment Management
+
+### 10. `setup_env.bat` - Environment Manager
+
+**Purpose**: Sets up an isolated virtual environment using `uv`.
+- **Checks for `uv`**: Verifies that the `uv` tool is installed.
+- **Creates `.venv`**: Initializes a local virtual environment.
+- **Installs Dependencies**: Installs packages from `requirements.txt` using `uv pip`.
+
+### 11. `MovieLibrary.bat` - Windows Launcher
+
+**Purpose**: Environment-aware launcher for the application.
+- **Auto-Activation**: Detects and activates the `.venv` folder automatically.
+- **Menu System**: Provides a user-friendly interface for scanning, enriching, and starting the server.
+- **Setup Integration**: Includes an option to run `setup_env.bat` directly.
+
 ---
 
-## Error Handling Strategy
+## External Integrations
 
-| Module | Strategy |
-|--------|----------|
-| `scanner.py` | Log warning, skip file, continue |
-| `parser.py` | Return "NA" for unparseable data |
-| `gemini_client.py` | Return default_result_na(), log error |
-| `omdb_client.py` | Return get_default_response(), log warning |
-| `storage.py` | Raise exception (critical path) |
-| `server.py` | send_error() with HTTP status code |
-
----
-
-## Testing
-
-Each module has a `if __name__ == "__main__":` block for standalone testing:
-
-```bash
-# Test scanner
-python scanner.py
-
-# Test parser
-python parser.py
-
-# Test Gemini client
-python gemini_client.py
-
-# Test OMDb client
-python omdb_client.py
-
-# Test storage
-python storage.py
-
-# Test enricher
-python enricher.py
-```
+- **Google Gemini API**: Used for AI-powered movie identification with web search grounding.
+- **OMDb API**: Used for fetching structured metadata (posters, ratings, etc.).
+- **VLC Media Player**: External player launched via command line.
+- **SQLite**: Local file-based database.
+- **CSV**: Human-readable data interchange format.
