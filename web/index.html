@@ -129,9 +129,25 @@
 
         .search-container {
             flex-grow: 10;
-            /* Maximize width */
             min-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .search-input-wrapper {
             position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-field-hint {
+            font-size: 0.72em;
+            color: var(--text-secondary);
+            opacity: 0.7;
+            padding-left: 4px;
+            letter-spacing: 0.2px;
         }
 
         .search-container input {
@@ -157,15 +173,15 @@
         }
 
         .search-clear {
+            position: absolute;
+            right: 12px;
             color: rgba(255, 255, 255, 0.5);
             font-size: 1.5em;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-
-        .search-clear:hover {
-            color: #fff;
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: none;
+            line-height: 1;
         }
 
         select {
@@ -829,30 +845,10 @@
         }
 
         /* Clear Button Styles */
-        .search-container {
-            position: relative;
-            flex-grow: 1;
-            display: flex;
-            align-items: center;
-        }
-
-        .search-clear {
-            position: absolute;
-            right: 15px;
-            background: none;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 1.2em;
-            cursor: pointer;
-            padding: 0;
-            box-shadow: none;
-            display: none;
-        }
 
         .search-clear:hover {
-            color: var(--text-primary);
-            transform: none;
-            box-shadow: none;
+            color: #fff;
+            transform: scale(1.1);
         }
 
         .clear-filters-btn {
@@ -895,9 +891,14 @@
 
             <div class="search-filters-row">
                 <div class="search-container">
-                    <input type="text" id="searchInput" placeholder="🔍 Search title, actor, genre..."
-                        onkeyup="filterMovies()">
-                    <button id="searchClear" class="search-clear" onclick="clearSearch()">&times;</button>
+                    <div class="search-input-wrapper">
+                        <input type="text" id="searchInput" placeholder="🔍 Search movies..." onkeyup="filterMovies()">
+                        <button id="searchClear" class="search-clear" onclick="clearSearch()"
+                            title="Clear search">&times;</button>
+                    </div>
+                    <div class="search-field-hint">
+                        Checks: Title, AI Title, File Name, Genre, Actors, Director, Plot, Tags
+                    </div>
                 </div>
 
                 <select id="genreSelect" onchange="updateFilterFromSelect('genre', this.value)">
@@ -1286,8 +1287,20 @@
                 const extracted = (movie.extracted_name || '').toLowerCase();
                 const genre = (movie.genre || '').toLowerCase();
                 const actors = (movie.actors || '').toLowerCase();
+                const director = (movie.director || '').toLowerCase();
+                const plot = (movie.plot || '').toLowerCase();
+                const tags = (movie.user_tags || '').toLowerCase();
 
-                const matchesQuery = !query || title.includes(query) || aiTitle.includes(query) || file.includes(query) || extracted.includes(query) || genre.includes(query) || actors.includes(query);
+                const matchesQuery = !query ||
+                    title.includes(query) ||
+                    aiTitle.includes(query) ||
+                    file.includes(query) ||
+                    extracted.includes(query) ||
+                    genre.includes(query) ||
+                    actors.includes(query) ||
+                    director.includes(query) ||
+                    plot.includes(query) ||
+                    tags.includes(query);
 
                 // Filter by genre
                 const matchesGenre = !activeFilters.genre || (movie.genre && movie.genre.includes(activeFilters.genre));
