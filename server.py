@@ -287,15 +287,18 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
                 "poster": result.get("poster", "NA"),
                 "imdb_rating": result.get("imdb_rating", "NA"),
                 "box_office": result.get("box_office", "NA"),
-                "is_active": 2  # Mark as enriched
+                "is_active": 3  # Mark as fully enriched (Success)
             }
             
             # Also update AI fields if we have IMDb ID
             # This helps with display and filtering
             if result.get("imdb_id", "NA") != "NA":
                 updates["imdb_id"] = result["imdb_id"]
-                updates["ai_title"] = result.get("title", "NA")
-                updates["ai_year"] = result.get("year", "NA")
+                # Preference: use OMDb official title if fetch was successful
+                if result.get("title") != "NA":
+                    updates["ai_title"] = result["title"]
+                if result.get("year") != "NA":
+                    updates["ai_year"] = result["year"]
             
             # Update database record
             update_sqlite_record(uuid_val, updates)
@@ -532,40 +535,27 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
 # SERVER STARTUP
 # =============================================================================
 
+class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    """
+    Multi-threaded HTTP server to handle concurrent requests.
+    Prevents long enrichment fetches from blocking the whole UI.
+    """
+    daemon_threads = True
+    allow_reuse_address = True
+
 def run_server():
     """
-    Start the HTTP server.
-    
-    Creates and runs an HTTP server that serves the movie library
-    web interface and API.
-    
-    Args:
-        None
-    
-    Configuration:
-        - Host: SERVER_HOST from config (default: localhost)
-        - Port: SERVER_PORT from config (default: 8010)
-    
-    Behavior:
-        - Creates WEB_DIR if it doesn't exist
-        - Runs until interrupted with Ctrl+C
-        - Handles KeyboardInterrupt gracefully
-    
-    Example:
-        >>> run_server()
-        Serving movie library at http://localhost:8010
-        Press Ctrl+C to stop
+    Start the multi-threaded HTTP server.
     """
     # Ensure web directory exists
     WEB_DIR.mkdir(exist_ok=True)
     
-    # Create and start server
-    with socketserver.TCPServer((SERVER_HOST, SERVER_PORT), MovieRequestHandler) as httpd:
+    # Create and start server with ThreadingMixIn
+    with ThreadedTCPServer((SERVER_HOST, SERVER_PORT), MovieRequestHandler) as httpd:
         logger.info(f"Serving movie library at http://{SERVER_HOST}:{SERVER_PORT}")
         logger.info("Press Ctrl+C to stop")
         
         try:
-            # Serve indefinitely
             httpd.serve_forever()
         except KeyboardInterrupt:
             logger.info("\nServer stopped.")

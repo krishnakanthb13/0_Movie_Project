@@ -242,7 +242,7 @@
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(b =>
-                b.classList.toggle('active', b.textContent.toLowerCase().includes(tab)));
+                b.classList.toggle('active', b.getAttribute('onclick').includes(`'${tab}'`)));
             render();
         }
 
@@ -284,7 +284,7 @@
                     <div class="actions">
                         ${currentTab === 'enriched' ?
                         `<button class="btn-info" onclick="showInfo('${movie.uuid}')">Info</button>` : ''}
-                        <button class="btn-update" onclick="updateMovie('${movie.uuid}')">
+                        <button class="btn-update" onclick="updateMovie('${movie.uuid}', event)">
                             ${currentTab === 'enriched' ? 'Update' : 'Enrich'}
                         </button>
                     </div>
@@ -293,7 +293,7 @@
             });
         }
 
-        async function updateMovie(uuid) {
+        async function updateMovie(uuid, e) {
             const title = document.getElementById(`title-${uuid}`).value;
             const year = document.getElementById(`year-${uuid}`).value;
             const imdbId = document.getElementById(`imdb-${uuid}`).value;
@@ -301,53 +301,40 @@
             const tags = document.getElementById(`tags-${uuid}`).value;
 
             // Show loading state
-            const btn = event.target;
+            const btn = e.target;
             const originalText = btn.textContent;
             btn.textContent = '...';
             btn.disabled = true;
 
             try {
-                const requests = [];
-
                 // 1. Update Metadata (Rating/Tags)
                 if (rating || tags) {
-                    requests.push(fetch('/api/update-metadata', {
+                    const res = await fetch('/api/update-metadata', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ uuid, user_rating: rating, user_tags: tags })
-                    }));
+                    });
+                    const data = await res.json();
+                    if (data.status === 'error') throw new Error(data.message);
                 }
 
-                // 2. Enrichment (Only if title/year/imdb provided)
-                if ((title || imdbId) && currentTab !== 'enriched') {
-                    // If we are pending, we definitely want to enrich
-                    requests.push(fetch('/api/manual-enrich', {
+                // 2. Enrichment
+                if ((title || imdbId)) {
+                    const res = await fetch('/api/manual-enrich', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ uuid, title, year, imdb_id: imdbId })
-                    }));
-                } else if (currentTab === 'enriched' && (title || imdbId)) {
-                    // In enriched mode, only enrich if user explicitly wants to re-fetch?
-                    // For now, let's assume if they changed the inputs they might want to re-fetch.
-                    // But if they just changed rating, we shouldn't.
-                    // Let's just call it if they pressed Update.
-                    // But wait, re-fetching OMDb is heavy.
-                    // Let's just do metadata if we are in Enriched mode, UNLESS title/imdb changed?
-                    // Simpler: Just do both if fields present. OMDb fetch is fast enough locally.
-                    requests.push(fetch('/api/manual-enrich', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ uuid, title, year, imdb_id: imdbId })
-                    }));
+                    });
+                    const data = await res.json();
+                    if (data.status === 'error') throw new Error(data.message);
                 }
 
-                await Promise.all(requests);
-
-                // Refresh
+                // Refresh only on success
                 await init();
 
-            } catch (e) {
-                alert('Update failed: ' + e);
+            } catch (error) {
+                console.error('Update failed:', error);
+                alert('Update failed: ' + error.message);
             } finally {
                 btn.textContent = originalText;
                 btn.disabled = false;
