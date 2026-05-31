@@ -429,15 +429,17 @@ def enrich_with_omdb(limit: Optional[int] = None) -> int:
             # Get AI-identified values
             ai_title = movie.get("ai_title", "NA")
             ai_year = movie.get("ai_year", "NA")
+            ai_imdb_id = movie.get("ai_imdb_id", "NA")
 
-            # Search OMDb by AI title/year
-            # (Using title/year instead of ai_imdb_id for verification)
-            res = fetch_by_title(ai_title, ai_year)
-            
+            # Look up OMDb. fetch_movie_data prefers the AI-found IMDb ID
+            # (an exact, unambiguous match) and only falls back to a
+            # title/year search if the ID is missing or returns nothing.
+            res = fetch_movie_data(imdb_id=ai_imdb_id, title=ai_title, year=ai_year)
+
             if res.get("title") != "NA":
                 result = res
                 match_found = True
-                logger.info(f"  -> Found via AI Title/Year: {result.get('title')}")
+                logger.info(f"  -> Found: {result.get('title')} ({result.get('year')})")
             else:
                 logger.warning(f"  -> No OMDb match found for AI Title: {ai_title}")
                 match_found = False
@@ -447,6 +449,27 @@ def enrich_with_omdb(limit: Optional[int] = None) -> int:
                 # Mark as failed for manual intervention
                 update_sqlite_record(movie["uuid"], {"is_active": 4})
                 enriched_count += 1  # Count as processed even if failed
+                continue
+
+            # Verify the OMDb result actually matches what the AI identified.
+            # A title-only fallback can return a different movie (remakes,
+            # common titles), so reject mismatches rather than silently
+            # attaching the wrong metadata. Skip verification when the lookup
+            # was by exact IMDb ID, which is already unambiguous.
+            matched_by_id = (
+                ai_imdb_id != "NA"
+                and result.get("imdb_id", "NA") == ai_imdb_id
+            )
+            if not matched_by_id and not verify_match(
+                ai_title, ai_year, result.get("title", "NA"), result.get("year", "NA")
+            ):
+                logger.warning(
+                    f"  -> OMDb result rejected (mismatch): "
+                    f"AI='{ai_title}' ({ai_year}) vs "
+                    f"OMDb='{result.get('title')}' ({result.get('year')})"
+                )
+                update_sqlite_record(movie["uuid"], {"is_active": 4})
+                enriched_count += 1  # Count as processed even if rejected
                 continue
 
             # Prepare comprehensive update with all OMDb fields
