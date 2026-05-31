@@ -389,7 +389,38 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
     # -------------------------------------------------------------------------
     # RESPONSE HELPERS
     # -------------------------------------------------------------------------
-    
+
+    # Content-Security-Policy for served pages. The UI uses large inline
+    # <style>/<script> blocks and a few inline event handlers, so 'unsafe-inline'
+    # is required for script/style. The real value here is the rest of the
+    # policy: connect-src 'self' blocks an injected script from exfiltrating to
+    # an external origin, object-src 'none' blocks plugins, base-uri/form-action
+    # 'self' and frame-ancestors 'none' block base-tag hijacking and clickjacking.
+    # img-src allows https posters (OMDb) and data: URIs.
+    CSP = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src https://fonts.gstatic.com; "
+        "img-src 'self' https: data:; "
+        "connect-src 'self'; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self'; "
+        "frame-ancestors 'none'"
+    )
+
+    def send_security_headers(self):
+        """
+        Emit security headers shared by all responses.
+
+        Must be called after send_response() and before end_headers().
+        """
+        self.send_header("Content-Security-Policy", self.CSP)
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("X-Frame-Options", "DENY")
+
     def send_json(self, data: Any):
         """
         Send JSON response to client.
@@ -410,6 +441,7 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
         # app, and the wildcard let any website read the movie list and
         # responses cross-origin. Same-origin requests from the bundled UI
         # are unaffected.
+        self.send_security_headers()
         self.end_headers()
         self.wfile.write(json.dumps(data).encode("utf-8"))
 
@@ -450,6 +482,7 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
                 ctype = "application/octet-stream"
             
             self.send_header("Content-type", ctype)
+            self.send_security_headers()
             self.end_headers()
             self.wfile.write(content)
             
