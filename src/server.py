@@ -407,7 +407,11 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
 
             # Update database
             update_sqlite_record(uuid_val, updates)
-            
+
+            # Sync to CSV atomically (locked read+rewrite) so the rating/tags
+            # reach the CSV "source of truth", not just SQLite.
+            sync_sqlite_to_csv()
+
             self.send_json({"status": "success", "message": "Metadata updated"})
             
         except Exception as e:

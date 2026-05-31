@@ -5,203 +5,626 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enrichment Manager</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* ===== Shared premium design system (matches index.html) ===== */
         :root {
-            --bg-color: #0a0a0f;
-            --text-primary: #f0f0f5;
-            --text-secondary: #a0a0b0;
-            --accent: #bb86fc;
-            --border: rgba(187, 134, 252, 0.15);
-            --card-bg: rgba(30, 30, 46, 0.8);
-            --success: #4caf50;
-            --info: #2196f3;
+            --bg: #0b0c12;
+            --bg-2: #11131c;
+            --surface: #171a26;
+            --surface-2: #1f2333;
+            --border: #2a2f42;
+            --text: #eef0f6;
+            --text-2: #a5abc0;
+            --text-3: #6c7287;
+            --accent: #7c5cff;
+            --accent-2: #9a7dff;
+            --on-accent: #fff;
+            --gold: #ffc857;
+            --success: #37d399;
+            --danger: #ff5d6c;
+            --warn: #ffb454;
+
+            --r-sm: 8px;
+            --r: 12px;
+            --r-lg: 18px;
+            --r-pill: 999px;
+
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, .25);
+            --shadow: 0 6px 20px rgba(0, 0, 0, .35);
+            --shadow-lg: 0 18px 50px rgba(0, 0, 0, .5);
+
+            --ring: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent);
+            --t: 180ms cubic-bezier(.4, 0, .2, 1);
         }
 
+        [data-theme="light"] {
+            --bg: #f5f6fb;
+            --bg-2: #fff;
+            --surface: #fff;
+            --surface-2: #f1f3fa;
+            --border: #e4e7f1;
+            --text: #161922;
+            --text-2: #5b6276;
+            --text-3: #9298ad;
+            --on-accent: #fff;
+
+            --shadow-sm: 0 1px 2px rgba(20, 25, 45, .06);
+            --shadow: 0 8px 24px rgba(20, 25, 45, .10);
+            --shadow-lg: 0 24px 60px rgba(20, 25, 45, .16);
+        }
+
+        * { box-sizing: border-box; }
+
+        html { color-scheme: dark; }
+        [data-theme="light"] html,
+        html[data-theme="light"] { color-scheme: light; }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-color);
-            color: var(--text-primary);
+            font-family: 'Inter', system-ui, sans-serif;
+            background:
+                radial-gradient(1100px 600px at 12% -10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
+                radial-gradient(900px 500px at 100% 0%, color-mix(in srgb, var(--gold) 8%, transparent), transparent 55%),
+                var(--bg);
+            color: var(--text);
             margin: 0;
-            padding: 20px;
+            padding: 0 0 64px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1180px;
             margin: 0 auto;
+            padding: 0 22px;
         }
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
+        a { color: inherit; }
+
+        /* ===== Sticky translucent header ===== */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(14px) saturate(140%);
+            -webkit-backdrop-filter: blur(14px) saturate(140%);
+            background: color-mix(in srgb, var(--bg) 78%, transparent);
             border-bottom: 1px solid var(--border);
         }
 
-        h1 {
-            margin: 0;
-            color: var(--accent);
+        .site-header .container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding-top: 16px;
+            padding-bottom: 16px;
         }
 
-        .tabs {
+        .brand {
             display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .brand-mark {
+            width: 38px;
+            height: 38px;
+            border-radius: 11px;
+            display: grid;
+            place-items: center;
+            color: var(--on-accent);
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            box-shadow: var(--shadow);
+            flex: none;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 1.18rem;
+            font-weight: 700;
+            letter-spacing: -.01em;
+            white-space: nowrap;
+        }
+
+        .brand .sub {
+            display: block;
+            font-size: .72rem;
+            font-weight: 500;
+            color: var(--text-3);
+            margin-top: 1px;
+        }
+
+        .header-actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
             gap: 10px;
-            margin-bottom: 20px;
+        }
+
+        .icon-btn,
+        .link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            height: 40px;
+            padding: 0 14px;
+            border-radius: var(--r-pill);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-2);
+            font: inherit;
+            font-size: .9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background var(--t), color var(--t), border-color var(--t), transform var(--t);
+        }
+
+        .icon-btn { width: 40px; padding: 0; justify-content: center; }
+
+        .icon-btn:hover,
+        .link-btn:hover {
+            color: var(--text);
+            border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+            background: var(--surface-2);
+        }
+
+        .link-btn:active,
+        .icon-btn:active { transform: translateY(1px); }
+
+        .icon-btn svg,
+        .link-btn svg { width: 18px; height: 18px; }
+
+        :focus-visible {
+            outline: none;
+            box-shadow: var(--ring);
+            border-radius: var(--r-sm);
+        }
+
+        /* ===== Toolbar: summary + tabs + search ===== */
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 14px;
+            margin: 28px 0 20px;
+        }
+
+        .segmented {
+            display: inline-flex;
+            padding: 4px;
+            gap: 4px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-pill);
+            box-shadow: var(--shadow-sm);
         }
 
         .tab-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text-secondary);
-            padding: 10px 20px;
-            border-radius: 8px;
+            border: none;
+            color: var(--text-2);
+            padding: 9px 18px;
+            border-radius: var(--r-pill);
             cursor: pointer;
-            font-size: 1em;
-            transition: all 0.2s;
+            font: inherit;
+            font-size: .92rem;
+            font-weight: 600;
+            transition: color var(--t), background var(--t);
         }
 
-        .tab-btn.active {
-            background: var(--accent);
-            color: #000;
+        .tab-btn:hover { color: var(--text); }
+
+        .tab-btn[aria-selected="true"] {
+            color: var(--on-accent);
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 40%, transparent);
+        }
+
+        .tab-count {
+            font-size: .76rem;
+            font-weight: 700;
+            min-width: 20px;
+            padding: 1px 7px;
+            border-radius: var(--r-pill);
+            background: color-mix(in srgb, var(--text) 10%, transparent);
+            color: inherit;
+        }
+
+        .tab-btn[aria-selected="true"] .tab-count {
+            background: rgba(255, 255, 255, .22);
+        }
+
+        .search {
+            position: relative;
+            margin-left: auto;
+            flex: 1 1 260px;
+            max-width: 360px;
+            min-width: 200px;
+        }
+
+        .search svg {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 17px;
+            height: 17px;
+            color: var(--text-3);
+            pointer-events: none;
+        }
+
+        .search input {
+            width: 100%;
+            height: 42px;
+            padding: 0 14px 0 38px;
+            border-radius: var(--r-pill);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            font: inherit;
+            font-size: .92rem;
+            transition: border-color var(--t), box-shadow var(--t), background var(--t);
+        }
+
+        .search input::placeholder { color: var(--text-3); }
+
+        .search input:focus-visible {
             border-color: var(--accent);
+            box-shadow: var(--ring);
         }
 
+        /* ===== Movie cards ===== */
         .movie-list {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 14px;
         }
 
         .movie-row {
-            background: var(--card-bg);
+            background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 15px;
-            display: flex;
+            border-radius: var(--r-lg);
+            padding: 18px 20px;
+            display: grid;
+            grid-template-columns: minmax(240px, 1.2fr) minmax(0, 2fr) auto;
             align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
+            gap: 22px;
+            box-shadow: var(--shadow-sm);
+            transition: border-color var(--t), box-shadow var(--t), transform var(--t);
         }
 
-        .movie-info {
-            flex: 1;
-            min-width: 300px;
+        .movie-row:hover {
+            border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+            box-shadow: var(--shadow);
         }
+
+        .movie-info { min-width: 0; }
 
         .file-name {
-            font-size: 0.85em;
-            color: var(--text-secondary);
-            margin-bottom: 5px;
-            font-family: monospace;
+            font-size: .76rem;
+            color: var(--text-3);
+            margin-bottom: 6px;
+            font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            word-break: break-all;
         }
+
+        .file-name svg { width: 13px; height: 13px; flex: none; }
 
         .movie-title {
             font-weight: 600;
-            font-size: 1.1em;
-        }
-
-        .inputs {
+            font-size: 1.05rem;
+            letter-spacing: -.01em;
             display: flex;
-            gap: 10px;
+            align-items: center;
+            gap: 9px;
             flex-wrap: wrap;
         }
 
-        input {
-            background: rgba(0, 0, 0, 0.3);
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: var(--r-pill);
+            font-size: .72rem;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+
+        .status-badge::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status-badge.enriched {
+            color: var(--success);
+            background: color-mix(in srgb, var(--success) 14%, transparent);
+            border-color: color-mix(in srgb, var(--success) 30%, transparent);
+        }
+
+        .status-badge.pending {
+            color: var(--warn);
+            background: color-mix(in srgb, var(--warn) 14%, transparent);
+            border-color: color-mix(in srgb, var(--warn) 30%, transparent);
+        }
+
+        /* Inputs grid */
+        .inputs {
+            display: grid;
+            grid-template-columns: 1.4fr .7fr 1fr;
+            gap: 10px 12px;
+        }
+
+        .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+
+        .field.span-2 { grid-column: span 2; }
+
+        .field label {
+            font-size: .68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--text-3);
+        }
+
+        .inputs input {
+            width: 100%;
+            background: var(--bg-2);
             border: 1px solid var(--border);
-            color: var(--text-primary);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-family: inherit;
+            color: var(--text);
+            padding: 9px 11px;
+            border-radius: var(--r-sm);
+            font: inherit;
+            font-size: .9rem;
+            transition: border-color var(--t), box-shadow var(--t), background var(--t);
         }
 
-        input.imdb-input {
-            width: 120px;
+        .inputs input::placeholder { color: var(--text-3); }
+
+        .inputs input:hover { border-color: color-mix(in srgb, var(--accent) 28%, var(--border)); }
+
+        .inputs input:focus-visible {
+            border-color: var(--accent);
+            box-shadow: var(--ring);
         }
 
-        input.year-input {
-            width: 80px;
-        }
-
-        input.title-input {
-            width: 200px;
-        }
-
+        /* Actions */
         .actions {
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            gap: 9px;
+            align-items: stretch;
+            min-width: 118px;
         }
 
         button {
             cursor: pointer;
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: none;
+            padding: 10px 18px;
+            border-radius: var(--r-sm);
+            border: 1px solid transparent;
+            font: inherit;
+            font-size: .9rem;
             font-weight: 600;
-            transition: all 0.2s;
+            transition: background var(--t), color var(--t), border-color var(--t), transform var(--t), box-shadow var(--t);
         }
 
-        .btn-update {
-            background: var(--info);
-            color: white;
+        button:active { transform: translateY(1px); }
+        button:disabled { opacity: .6; cursor: progress; }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: var(--on-accent);
+            box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 38%, transparent);
         }
 
-        .btn-info {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-secondary);
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 50%, transparent);
+            filter: brightness(1.05);
         }
 
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
-            background: rgba(255, 255, 255, 0.1);
+        .btn-ghost {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            background: var(--surface-2);
+            color: var(--text-2);
+            border-color: var(--border);
         }
 
-        .enriched {
-            color: var(--success);
+        .btn-ghost:hover {
+            color: var(--text);
+            border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+            background: var(--surface);
         }
 
-        .pending {
-            color: var(--text-secondary);
+        .btn-primary svg,
+        .btn-ghost svg { width: 16px; height: 16px; }
+
+        /* ===== States: skeleton / empty / error ===== */
+        .state {
+            text-align: center;
+            padding: 64px 24px;
+            border: 1px dashed var(--border);
+            border-radius: var(--r-lg);
+            background: color-mix(in srgb, var(--surface) 60%, transparent);
+            color: var(--text-2);
         }
 
-        /* Modal */
+        .state svg { width: 44px; height: 44px; color: var(--text-3); margin-bottom: 14px; }
+        .state h3 { margin: 0 0 6px; color: var(--text); font-size: 1.05rem; }
+        .state p { margin: 0; font-size: .9rem; color: var(--text-3); }
+        .state.error { border-color: color-mix(in srgb, var(--danger) 40%, var(--border)); }
+        .state.error svg, .state.error h3 { color: var(--danger); }
+
+        .skeleton-row {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 18px 20px;
+            display: grid;
+            grid-template-columns: 1.2fr 2fr auto;
+            gap: 22px;
+            align-items: center;
+        }
+
+        .sk {
+            border-radius: var(--r-sm);
+            background: linear-gradient(100deg, var(--surface-2) 30%, color-mix(in srgb, var(--text) 8%, var(--surface-2)) 50%, var(--surface-2) 70%);
+            background-size: 200% 100%;
+            animation: shimmer 1.3s ease-in-out infinite;
+            height: 14px;
+        }
+
+        .sk.lg { height: 20px; width: 70%; }
+        .sk.sm { height: 11px; width: 45%; }
+        .sk.block { height: 40px; }
+        .sk.btn { height: 40px; width: 110px; }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ===== Modal ===== */
         .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
+            inset: 0;
+            background: color-mix(in srgb, var(--bg) 55%, rgba(0, 0, 0, .6));
+            backdrop-filter: blur(8px) saturate(120%);
+            -webkit-backdrop-filter: blur(8px) saturate(120%);
             display: none;
             align-items: center;
             justify-content: center;
+            padding: 22px;
             z-index: 1000;
+            animation: fade var(--t) ease;
         }
+
+        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 
         .modal {
-            background: #1a1a2e;
-            padding: 30px;
-            border-radius: 12px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
+            background: var(--surface);
             border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 26px;
+            max-width: 640px;
+            width: 100%;
+            max-height: 86vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
         }
 
-        .hidden {
-            display: none;
+        .modal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 20px;
         }
 
-        /* Toast notifications (non-blocking feedback) */
+        .modal-head h2 { margin: 0; font-size: 1.15rem; }
+
+        .modal-x {
+            width: 34px; height: 34px; padding: 0;
+            border-radius: var(--r-pill);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text-2);
+            display: grid; place-items: center;
+        }
+        .modal-x:hover { color: var(--text); background: var(--surface); }
+        .modal-x svg { width: 16px; height: 16px; }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            gap: 22px;
+            align-items: start;
+        }
+
+        .info-poster {
+            width: 100%;
+            aspect-ratio: 2 / 3;
+            object-fit: cover;
+            border-radius: var(--r);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            background: var(--surface-2);
+        }
+
+        .info-poster-fallback {
+            width: 100%;
+            aspect-ratio: 2 / 3;
+            border-radius: var(--r);
+            border: 1px dashed var(--border);
+            display: grid;
+            place-items: center;
+            color: var(--text-3);
+            background: var(--surface-2);
+        }
+        .info-poster-fallback svg { width: 40px; height: 40px; }
+
+        .info-body h3 { margin: 0 0 4px; font-size: 1.3rem; letter-spacing: -.01em; }
+        .info-year { color: var(--text-3); font-weight: 500; font-size: 1rem; }
+
+        .imdb-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+            padding: 4px 11px;
+            border-radius: var(--r-pill);
+            background: color-mix(in srgb, var(--gold) 16%, transparent);
+            border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent);
+            color: var(--gold);
+            font-weight: 700;
+            font-size: .85rem;
+        }
+        .imdb-pill svg { width: 14px; height: 14px; }
+
+        .meta-grid {
+            margin-top: 16px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .meta-item .k {
+            font-size: .68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--text-3);
+            margin-bottom: 3px;
+        }
+        .meta-item .v { font-size: .94rem; color: var(--text); line-height: 1.5; }
+        .meta-plot { grid-column: 1 / -1; }
+
+        /* ===== Toasts ===== */
         .toast-container {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: 22px;
+            right: 22px;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -209,51 +632,147 @@
         }
 
         .toast {
-            padding: 12px 18px;
-            border-radius: 10px;
-            color: #fff;
-            font-size: 0.9em;
-            background: #37474f;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-            max-width: 320px;
-            transition: opacity 0.3s, transform 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 13px 17px;
+            border-radius: var(--r);
+            color: var(--text);
+            font-size: .9rem;
+            font-weight: 500;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+            max-width: 340px;
+            border-left: 3px solid var(--text-3);
+            transition: opacity .3s, transform .3s;
         }
 
-        .toast-success { background: #2e7d32; }
-        .toast-error { background: #c62828; }
+        .toast-success { border-left-color: var(--success); }
+        .toast-error { border-left-color: var(--danger); }
         .toast-hide { opacity: 0; transform: translateY(10px); }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
+            }
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 900px) {
+            .movie-row, .skeleton-row {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .actions { flex-direction: row; }
+            .actions button { flex: 1; }
+        }
+
+        @media (max-width: 620px) {
+            .toolbar { gap: 12px; }
+            .search { margin-left: 0; max-width: none; flex-basis: 100%; }
+            .inputs { grid-template-columns: 1fr 1fr; }
+            .field.span-2 { grid-column: span 2; }
+            .info-grid { grid-template-columns: 1fr; }
+            .info-poster, .info-poster-fallback { max-width: 180px; }
+            .brand .sub { display: none; }
+        }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <header>
-            <h1>Enrichment Manager</h1>
-            <a href="/" style="color: var(--text-secondary); text-decoration: none;">Back to Viewer</a>
-        </header>
+    <header class="site-header">
+        <div class="container">
+            <div class="brand">
+                <span class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"/><path d="M7 3v18M17 3v18M3 8h4M17 8h4M3 16h4M17 16h4"/></svg>
+                </span>
+                <div>
+                    <h1>Enrichment Manager</h1>
+                    <span class="sub">Review &amp; complete movie metadata</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="themeToggle" class="icon-btn" type="button" onclick="toggleTheme()" aria-label="Toggle color theme" title="Toggle theme">
+                    <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+                <a class="link-btn" href="/">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    <span>Back to Viewer</span>
+                </a>
+            </div>
+        </div>
+    </header>
 
-        <div class="tabs" role="tablist">
-            <button class="tab-btn active" role="tab" aria-selected="true" onclick="switchTab('pending')">Pending Enrichment</button>
-            <button class="tab-btn" role="tab" aria-selected="false" onclick="switchTab('enriched')">Enriched</button>
+    <main class="container">
+        <div class="toolbar">
+            <div class="segmented" role="tablist" aria-label="Enrichment status">
+                <button class="tab-btn" role="tab" aria-selected="true" onclick="switchTab('pending')">
+                    Pending <span class="tab-count" id="countPending">0</span>
+                </button>
+                <button class="tab-btn" role="tab" aria-selected="false" onclick="switchTab('enriched')">
+                    Enriched <span class="tab-count" id="countEnriched">0</span>
+                </button>
+            </div>
+
+            <div class="search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+                <input type="search" id="searchInput" placeholder="Search by filename or title…" aria-label="Search movies" oninput="render()" autocomplete="off">
+            </div>
         </div>
 
-        <div id="movieList" class="movie-list">
-            <div style="text-align: center; color: var(--text-secondary);">Loading...</div>
-        </div>
-    </div>
+        <div id="movieList" class="movie-list" role="region" aria-live="polite"></div>
+    </main>
 
     <!-- Info Modal -->
     <div id="infoModal" class="modal-overlay" onclick="closeModal()">
         <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" onclick="event.stopPropagation()">
-            <h2 id="modalTitle">Movie Details</h2>
+            <div class="modal-head">
+                <h2 id="modalTitle">Movie Details</h2>
+                <button class="modal-x" type="button" onclick="closeModal()" aria-label="Close details">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
             <div id="modalContent"></div>
-            <button onclick="closeModal()" style="margin-top: 20px; width: 100%;">Close</button>
         </div>
     </div>
 
     <script>
         let allMovies = [];
         let currentTab = 'pending';
+
+        // UI preferences persist across reloads via localStorage.
+        function loadPref(key, def) {
+            try {
+                const v = localStorage.getItem(key);
+                return v === null ? def : JSON.parse(v);
+            } catch (e) {
+                return def;
+            }
+        }
+        function savePref(key, val) {
+            try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+        }
+
+        // ----- Theme (dark default, light toggle) -----
+        function applyTheme(theme) {
+            document.documentElement.dataset.theme = theme;
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                // Moon for dark mode (click -> light), sun for light mode.
+                icon.innerHTML = theme === 'light'
+                    ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>'
+                    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+            }
+        }
+        function toggleTheme() {
+            const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+            savePref('theme', next);
+            applyTheme(next);
+        }
+        applyTheme(loadPref('theme', 'dark'));
 
         // Escape untrusted strings before inserting into HTML. All movie
         // fields originate from filenames on disk, the OMDb API, or user
@@ -302,17 +821,58 @@
             }
         }
 
+        // A movie counts as enriched once it has a real title from OMDb.
+        function isEnrichedMovie(m) {
+            return m.title !== 'NA' && m.title != null;
+        }
+
+        function updateCounts() {
+            let pending = 0, enriched = 0;
+            for (const m of allMovies) { isEnrichedMovie(m) ? enriched++ : pending++; }
+            const cp = document.getElementById('countPending');
+            const ce = document.getElementById('countEnriched');
+            if (cp) cp.textContent = pending;
+            if (ce) ce.textContent = enriched;
+        }
+
+        function showSkeleton() {
+            const container = document.getElementById('movieList');
+            let html = '';
+            for (let i = 0; i < 4; i++) {
+                html += `
+                    <div class="skeleton-row" aria-hidden="true">
+                        <div>
+                            <div class="sk sm" style="margin-bottom:10px"></div>
+                            <div class="sk lg"></div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1.4fr .7fr 1fr;gap:10px 12px;">
+                            <div class="sk block"></div><div class="sk block"></div><div class="sk block"></div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:9px;">
+                            <div class="sk btn"></div>
+                        </div>
+                    </div>`;
+            }
+            container.innerHTML = html;
+        }
+
         async function init() {
             const container = document.getElementById('movieList');
+            if (allMovies.length === 0) showSkeleton();
             try {
                 const res = await fetch('/api/movies');
                 if (!res.ok) throw new Error(res.statusText || ('HTTP ' + res.status));
                 allMovies = await res.json();
+                updateCounts();
                 render();
             } catch (e) {
                 console.error(e);
                 // Previously left a permanent "Loading..." on failure.
-                container.innerHTML = `<div style="text-align:center; padding:40px; color:#ff6b6b;">❌ Failed to load movies (${escapeHtml(e.message)}). Is the server running?</div>`;
+                container.innerHTML = `<div class="state error" role="alert">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                    <h3>Failed to load movies</h3>
+                    <p>${escapeHtml(e.message)}. Is the server running?</p>
+                </div>`;
             }
         }
 
@@ -320,7 +880,6 @@
             currentTab = tab;
             document.querySelectorAll('.tab-btn').forEach(b => {
                 const isActive = b.getAttribute('onclick').includes(`'${tab}'`);
-                b.classList.toggle('active', isActive);
                 b.setAttribute('aria-selected', isActive ? 'true' : 'false');
             });
             render();
@@ -330,13 +889,32 @@
             const container = document.getElementById('movieList');
             container.innerHTML = '';
 
-            const filtered = allMovies.filter(m => {
-                const isEnriched = m.title !== 'NA' && m.title != null;
-                return currentTab === 'enriched' ? isEnriched : !isEnriched;
+            const searchEl = document.getElementById('searchInput');
+            const q = (searchEl ? searchEl.value : '').trim().toLowerCase();
+
+            const filtered = allMovies.filter(movie => {
+                const isEnriched = isEnrichedMovie(movie);
+                if (currentTab === 'enriched' ? !isEnriched : isEnriched) return false;
+                if (!q) return true;
+                // Client-side filter across filename + best-known title fields.
+                const hay = [movie.file_name, movie.title, movie.ai_title, movie.extracted_name]
+                    .filter(v => v && v !== 'NA').join(' ').toLowerCase();
+                return hay.includes(q);
             });
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding: 40px;">No movies found in this category.</div>`;
+                const searching = !!q;
+                container.innerHTML = `<div class="state" role="status">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${
+                        searching
+                        ? '<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/>'
+                        : '<path d="M2 3h6l2 4h12v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/>'
+                    }</svg>
+                    <h3>${searching ? 'No matches found' : (currentTab === 'enriched' ? 'No enriched movies yet' : 'Nothing pending')}</h3>
+                    <p>${searching
+                        ? 'Try a different filename or title.'
+                        : (currentTab === 'enriched' ? 'Enriched movies will appear here once saved.' : 'All caught up — every movie has metadata.')}</p>
+                </div>`;
                 return;
             }
 
@@ -344,6 +922,7 @@
                 const row = document.createElement('div');
                 row.className = 'movie-row';
 
+                const enriched = isEnrichedMovie(movie);
                 const displayTitle = movie.ai_title !== 'NA' ? movie.ai_title : movie.extracted_name;
                 const displayYear = movie.ai_year !== 'NA' ? movie.ai_year : movie.extracted_year;
 
@@ -354,26 +933,55 @@
                 const tagsVal = escapeHtml(movie.user_tags !== 'NA' && movie.user_tags ? movie.user_tags : '');
                 const uuid = escapeHtml(movie.uuid);
 
+                const badge = enriched
+                    ? '<span class="status-badge enriched">Enriched</span>'
+                    : '<span class="status-badge pending">Pending</span>';
+
                 row.innerHTML = `
                     <div class="movie-info">
-                        <div class="file-name">${escapeHtml(movie.file_name)}</div>
-                        <div class="movie-title">${escapeHtml(displayTitle)} (${escapeHtml(displayYear)})</div>
+                        <div class="file-name">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M13 2v7h7"/></svg>
+                            <span>${escapeHtml(movie.file_name)}</span>
+                        </div>
+                        <div class="movie-title">${escapeHtml(displayTitle)} (${escapeHtml(displayYear)}) ${badge}</div>
                     </div>
 
                     <div class="inputs">
-                        <input type="text" class="title-input" placeholder="Title" value="${titleVal}" id="title-${uuid}">
-                        <input type="text" class="year-input" placeholder="Year" value="${yearVal}" id="year-${uuid}">
-                        <input type="text" class="imdb-input" placeholder="IMDb ID" value="${imdbVal}" id="imdb-${uuid}">
-                        <input type="number" class="year-input" placeholder="Rate" min="0" max="10" value="${rateVal}" id="rate-${uuid}" title="User Rating (0-10)">
-                        <input type="text" class="imdb-input" placeholder="Tags" value="${tagsVal}" id="tags-${uuid}" title="Comma-separated tags">
+                        <div class="field">
+                            <label for="title-${uuid}">Title</label>
+                            <input type="text" placeholder="Movie title" value="${titleVal}" id="title-${uuid}">
+                        </div>
+                        <div class="field">
+                            <label for="year-${uuid}">Year</label>
+                            <input type="text" placeholder="YYYY" value="${yearVal}" id="year-${uuid}">
+                        </div>
+                        <div class="field">
+                            <label for="imdb-${uuid}">IMDb ID</label>
+                            <input type="text" placeholder="tt1234567" value="${imdbVal}" id="imdb-${uuid}">
+                        </div>
+                        <div class="field">
+                            <label for="rate-${uuid}">My Rating (0–10)</label>
+                            <input type="number" placeholder="–" min="0" max="10" step="0.1" value="${rateVal}" id="rate-${uuid}" title="Your personal rating, 0 to 10">
+                        </div>
+                        <div class="field span-2">
+                            <label for="tags-${uuid}">Tags</label>
+                            <input type="text" placeholder="comma, separated, tags" value="${tagsVal}" id="tags-${uuid}" title="Comma-separated tags">
+                        </div>
                     </div>
 
                     <div class="actions">
-                        ${currentTab === 'enriched' ?
-                        `<button class="btn-info" onclick="showInfo('${uuid}')">Info</button>` : ''}
-                        <button class="btn-update" onclick="updateMovie('${uuid}', event)">
-                            ${currentTab === 'enriched' ? 'Update' : 'Enrich'}
+                        <button class="btn-primary" onclick="updateMovie('${uuid}', event)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${
+                                enriched
+                                ? '<path d="M21.5 2v6h-6M2.5 22v-6h6"/><path d="M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>'
+                                : '<path d="M5 3l14 9-14 9z"/>'
+                            }</svg>
+                            <span>${enriched ? 'Update' : 'Enrich'}</span>
                         </button>
+                        ${enriched ? `<button class="btn-ghost" onclick="showInfo('${uuid}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                            <span>Info</span>
+                        </button>` : ''}
                     </div>
                 `;
                 container.appendChild(row);
@@ -391,7 +999,7 @@
             // button element, even if a child node was the click target.
             const btn = e.currentTarget;
             const originalText = btn.textContent;
-            btn.textContent = '...';
+            btn.textContent = 'Saving…';
             btn.disabled = true;
 
             const postJson = async (url, body) => {
@@ -436,16 +1044,35 @@
 
             const content = document.getElementById('modalContent');
             const poster = safePosterUrl(movie.poster);
+
+            const metaRow = (k, v) => {
+                const val = (v && v !== 'NA') ? escapeHtml(v) : '—';
+                return `<div class="meta-item"><div class="k">${escapeHtml(k)}</div><div class="v">${val}</div></div>`;
+            };
+
+            const posterHtml = poster
+                ? `<img class="info-poster" src="${escapeHtml(poster)}" alt="${escapeHtml(movie.title)} poster">`
+                : `<div class="info-poster-fallback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
+
+            const imdbRating = (movie.imdb_rating && movie.imdb_rating !== 'NA');
+            const imdbPill = imdbRating
+                ? `<div class="imdb-pill"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 17.3 5.8 20.9l1.6-6.8L2.2 8.9l6.9-.6z"/></svg>${escapeHtml(movie.imdb_rating)} IMDb</div>`
+                : '';
+
             content.innerHTML = `
-                <div style="display:flex; gap:20px; align-items:start;">
-                    ${poster ? `<img src="${escapeHtml(poster)}" alt="${escapeHtml(movie.title)} poster" style="width:150px; border-radius:8px;">` : ''}
-                    <div>
-                        <h3>${escapeHtml(movie.title)} (${escapeHtml(movie.year)})</h3>
-                        <p><strong>Genre:</strong> ${escapeHtml(movie.genre)}</p>
-                        <p><strong>Director:</strong> ${escapeHtml(movie.director)}</p>
-                        <p><strong>Actors:</strong> ${escapeHtml(movie.actors)}</p>
-                        <p><strong>Plot:</strong> ${escapeHtml(movie.plot)}</p>
-                        <p><strong>IMDb:</strong> ${escapeHtml(movie.imdb_rating)} (${escapeHtml(movie.imdb_id)})</p>
+                <div class="info-grid">
+                    ${posterHtml}
+                    <div class="info-body">
+                        <h3>${escapeHtml(movie.title)}</h3>
+                        <span class="info-year">${escapeHtml(movie.year)}</span>
+                        ${imdbPill}
+                        <div class="meta-grid">
+                            ${metaRow('Genre', movie.genre)}
+                            ${metaRow('Director', movie.director)}
+                            ${metaRow('Actors', movie.actors)}
+                            ${metaRow('IMDb ID', movie.imdb_id)}
+                            <div class="meta-item meta-plot"><div class="k">Plot</div><div class="v">${(movie.plot && movie.plot !== 'NA') ? escapeHtml(movie.plot) : '—'}</div></div>
+                        </div>
                     </div>
                 </div>
             `;
