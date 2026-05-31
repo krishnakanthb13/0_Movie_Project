@@ -1,65 +1,56 @@
 :START
 @echo off
 title Movie Library Manager
-color 0A
 chcp 65001 >nul
+
+:: ANSI color setup. Capture the ESC (0x1B) char, then define color vars.
+:: ANSI codes are zero-width, so they don't affect the menu's column alignment.
+for /f %%a in ('echo prompt $E ^| cmd') do set "ESC=%%a"
+set "CR=%ESC%[0m"
+set "CB=%ESC%[36m"
+set "CT=%ESC%[1;97m"
+set "CS=%ESC%[1;36m"
+set "CK=%ESC%[93m"
+set "CD=%ESC%[90m"
+set "CG=%ESC%[92m"
+set "CE=%ESC%[91m"
 
 :: Virtual Environment Activation
 if exist ".venv\Scripts\activate.bat" (
-    echo [Environment] Activating virtual environment...
+    echo  %CG%[Environment]%CR% Activating virtual environment...
     call .venv\Scripts\activate.bat
 ) else (
-    echo [Environment] No virtual environment found. Running globally.
-    echo [Hint] Run Option [V] to set up an isolated environment.
+    echo  %CE%[Environment]%CR% No virtual environment found. Running globally.
+    echo  %CD%[Hint] Run Option [V] to set up an isolated environment.%CR%
 )
 
 :MENU
 cls
 echo.
-echo  ╔══════════════════════════════════════════════════════════════╗
-echo  ║              MOVIE LIBRARY MANAGER                           ║
-echo  ╠══════════════════════════════════════════════════════════════╣
-echo  ║                                                              ║
-echo  ║   SCANNING                                                   ║
-echo  ║   [1] Full Scan (Index all videos)                           ║
-echo  ║   [2] Quick Scan (First 50 files)                            ║
-echo  ║   [3] Custom Scan (Enter limit)                              ║
-echo  ║                                                              ║
-echo  ║   VIEWING                                                    ║
-echo  ║   [4] Show Statistics                                        ║
-echo  ║   [5] Show Sample Records (10)                               ║
-echo  ║   [6] Show Sample Records (Custom)                           ║
-echo  ║                                                              ║
-echo  ║   DATABASE                                                   ║
-echo  ║   [7] Sync CSV to SQLite                                     ║
-echo  ║   [8] Open CSV File                                          ║
-echo  ║   [9] Open Data Folder                                       ║
-echo  ║   [D] Cleanup (Remove deleted movies)                        ║
-echo  ║   [M] Clean Movie Titles (Global Word Removal)               ║
-echo  ║                                                              ║
-echo  ║   ENRICHMENT (Requires API Keys)                             ║
-echo  ║   [A] AI Enrichment (Gemini)                                 ║
-echo  ║   [B] OMDb Enrichment                                        ║
-echo  ║   [C] Full Enrichment (AI + OMDb) - Line by Line             ║
-echo  ║   [K] Bulk AI Enrichment (Text-Only, User Configured Model)  ║
-echo  ║   [L] Full Bulk Enrichment (Bulk AI + OMDb)                  ║
-echo  ║   [F] Retry Failed OMDb Enrichments                          ║
-echo  ║                                                              ║
-echo  ║   SERVER                                                     ║
-echo  ║   [S] Start Web Server                                       ║
-echo  ║                                                              ║
-echo  ║   OTHER                                                      ║
-echo  ║   [V] Set Up Virtual Environment (UV)                        ║
-echo  ║   [T] Test Parser                                            ║
-echo  ║   [E] Edit .env File (API Keys)                              ║
-echo  ║   [H] Help (Show Command Line Usage)                         ║
-echo  ║   [R] Reset Data (Clear CSV and Database)                    ║
-echo  ║   [0] Exit                                                   ║
-echo  ║                                                              ║
-echo  ╚══════════════════════════════════════════════════════════════╝
+echo  %CB%╔═══════════════════════════════════╦═══════════════════════════════════╗%CR%
+echo  %CB%║%CR%%CT%                          MOVIE LIBRARY MANAGER                        %CR%%CB%║%CR%
+echo  %CB%╠═══════════════════════════════════╬═══════════════════════════════════╣%CR%
+echo  %CB%║%CR%%CS% SCANNING                          %CR%%CB%║%CR%%CS% ENRICHMENT (needs keys)           %CR%%CB%║%CR%
+echo  %CB%║%CR%  %CK%[1]%CR% Full Scan                    %CB%║%CR%  %CK%[A]%CR% AI Enrich (Gemini)           %CB%║%CR%
+echo  %CB%║%CR%  %CK%[2]%CR% Quick Scan (50)              %CB%║%CR%  %CK%[B]%CR% OMDb Enrich                  %CB%║%CR%
+echo  %CB%║%CR%  %CK%[3]%CR% Custom Scan                  %CB%║%CR%  %CK%[C]%CR% Full Enrich (AI+OMDb)        %CB%║%CR%
+echo  %CB%║%CR%%CS% VIEWING                           %CR%%CB%║%CR%  %CK%[K]%CR% Bulk AI Enrich               %CB%║%CR%
+echo  %CB%║%CR%  %CK%[4]%CR% Statistics                   %CB%║%CR%  %CK%[L]%CR% Full Bulk (AI+OMDb)          %CB%║%CR%
+echo  %CB%║%CR%  %CK%[5]%CR% Sample (10)                  %CB%║%CR%  %CK%[F]%CR% Retry Failed OMDb            %CB%║%CR%
+echo  %CB%║%CR%  %CK%[6]%CR% Sample (Custom)              %CB%║%CR%%CS% SERVER                            %CR%%CB%║%CR%
+echo  %CB%║%CR%%CS% DATABASE                          %CR%%CB%║%CR%  %CK%[S]%CR% Start Web Server             %CB%║%CR%
+echo  %CB%║%CR%  %CK%[7]%CR% Sync CSV to SQLite           %CB%║%CR%%CS% OTHER                             %CR%%CB%║%CR%
+echo  %CB%║%CR%  %CK%[8]%CR% Open CSV File                %CB%║%CR%  %CK%[V]%CR% Setup venv (UV)              %CB%║%CR%
+echo  %CB%║%CR%  %CK%[9]%CR% Open Data Folder             %CB%║%CR%  %CK%[T]%CR% Test Parser                  %CB%║%CR%
+echo  %CB%║%CR%  %CK%[D]%CR% Cleanup (deleted)            %CB%║%CR%  %CK%[E]%CR% Edit .env                    %CB%║%CR%
+echo  %CB%║%CR%  %CK%[M]%CR% Clean Titles                 %CB%║%CR%  %CK%[H]%CR% Help                         %CB%║%CR%
+echo  %CB%║%CR%                                   %CB%║%CR%  %CK%[R]%CR% Reset Data                   %CB%║%CR%
+echo  %CB%╠═══════════════════════════════════╩═══════════════════════════════════╣%CR%
+echo  %CB%║%CR%  %CK%[0]%CR% Exit                                                             %CB%║%CR%
+echo  %CB%╚═══════════════════════════════════════════════════════════════════════╝%CR%
 echo.
 
-set /p choice="  Select an option: "
+set /p choice="  %CK%Select an option:%CR% "
 
 if "%choice%"=="1" goto FULL_SCAN
 if "%choice%"=="2" goto QUICK_SCAN
@@ -86,7 +77,7 @@ if /i "%choice%"=="H" goto HELP
 if /i "%choice%"=="R" goto RESET
 if "%choice%"=="0" goto EXIT
 
-echo  Invalid option. Press any key to try again...
+echo  %CE%Invalid option.%CR% Press any key to try again...
 pause >nul
 goto MENU
 
@@ -98,8 +89,9 @@ echo   FULL SCAN - Indexing all videos...
 echo  ========================================
 echo.
 python src\main.py --scan
+set "rc=%errorlevel%"
 echo.
-echo  Scan complete!
+call :STATUS %rc% "Full scan"
 pause
 goto MENU
 
@@ -111,7 +103,9 @@ echo   QUICK SCAN - First 50 files...
 echo  ========================================
 echo.
 python src\main.py --scan --limit 50
+set "rc=%errorlevel%"
 echo.
+call :STATUS %rc% "Quick scan"
 pause
 goto MENU
 
@@ -123,7 +117,9 @@ echo.
 echo  Scanning %limit% files...
 echo.
 python src\main.py --scan --limit %limit%
+set "rc=%errorlevel%"
 echo.
+call :STATUS %rc% "Custom scan"
 pause
 goto MENU
 
@@ -133,7 +129,9 @@ echo.
 echo  Fetching Database Statistics...
 echo.
 python src\main.py --stats
+set "rc=%errorlevel%"
 echo.
+call :STATUS %rc% "Statistics"
 pause
 goto MENU
 
@@ -141,7 +139,9 @@ goto MENU
 cls
 echo.
 python src\main.py --sample 10
+set "rc=%errorlevel%"
 echo.
+call :STATUS %rc% "Sample"
 pause
 goto MENU
 
@@ -151,7 +151,9 @@ echo.
 set /p count="  Enter number of samples to show: "
 echo.
 python src\main.py --sample %count%
+set "rc=%errorlevel%"
 echo.
+call :STATUS %rc% "Sample"
 pause
 goto MENU
 
@@ -161,8 +163,9 @@ echo.
 echo  Syncing CSV to SQLite...
 echo.
 python src\main.py --sync
+set "rc=%errorlevel%"
 echo.
-echo  Sync complete!
+call :STATUS %rc% "CSV to SQLite sync"
 pause
 goto MENU
 
@@ -185,8 +188,7 @@ echo  ========================================
 echo   AI ENRICHMENT (Gemini)
 echo  ========================================
 echo.
-echo  This requires GEMINI_API_KEY in .env
-echo  This requires GEMINI_API_KEY in .env
+echo  %CD%Requires GEMINI_API_KEY in .env%CR%
 echo.
 set /p limit="  Enter limit (default 10, 'all' for all): "
 if "%limit%"=="" set limit=10
@@ -198,7 +200,9 @@ if /i "%limit%"=="all" (
 ) else (
     python src\main.py --enrich %AIFLAGS% --limit %limit%
 )
+set "rc=%errorlevel%"
 echo.
+call :STATUS %rc% "AI enrichment"
 pause
 goto MENU
 
@@ -222,7 +226,9 @@ if /i "%limit%"=="all" (
 ) else (
     python src\main.py --enrich --bulk %AIFLAGS% --limit %limit%
 )
+set "rc=%errorlevel%"
 echo.
+call :STATUS %rc% "Bulk AI enrichment"
 pause
 goto MENU
 
@@ -252,7 +258,9 @@ if /i "%limit%"=="all" (
     echo  [Step 1 Complete] Starting OMDb fetch...
     python src\main.py --fetch-omdb --limit %limit%
 )
+set "rc=%errorlevel%"
 echo.
+call :STATUS %rc% "Full bulk enrichment"
 pause
 goto MENU
 
@@ -263,8 +271,7 @@ echo  ========================================
 echo   OMDb ENRICHMENT
 echo  ========================================
 echo.
-echo  This requires OMDB_API_KEY in .env
-echo  This requires OMDB_API_KEY in .env
+echo  %CD%Requires OMDB_API_KEY in .env%CR%
 echo.
 set /p limit="  Enter limit (default 10, 'all' for all): "
 if "%limit%"=="" set limit=10
@@ -274,7 +281,9 @@ if /i "%limit%"=="all" (
 ) else (
     python src\main.py --fetch-omdb --limit %limit%
 )
+set "rc=%errorlevel%"
 echo.
+call :STATUS %rc% "OMDb enrichment"
 pause
 goto MENU
 
@@ -298,7 +307,9 @@ if /i "%limit%"=="all" (
     python src\main.py --enrich %AIFLAGS% --limit %limit%
     python src\main.py --fetch-omdb --limit %limit%
 )
+set "rc=%errorlevel%"
 echo.
+call :STATUS %rc% "Full enrichment"
 pause
 goto MENU
 
@@ -320,7 +331,9 @@ if /i "%limit%"=="all" (
 ) else (
     python src\main.py --retry-failed --limit %limit%
 )
+set "rc=%errorlevel%"
 echo.
+call :STATUS %rc% "Retry failed"
 pause
 goto MENU
 
@@ -346,7 +359,9 @@ echo   PARSER TEST
 echo  ========================================
 echo.
 python src\parser.py
+set "rc=%errorlevel%"
 echo.
+call :STATUS %rc% "Parser test"
 pause
 goto MENU
 
@@ -371,6 +386,8 @@ goto MENU
 :RESET
 cls
 python src\reset_data.py
+set "rc=%errorlevel%"
+call :STATUS %rc% "Reset data"
 pause
 goto MENU
 
@@ -392,9 +409,14 @@ set /p confirm="  Remove these movies from database? (Y/N): "
 if /i "%confirm%"=="Y" (
     python src\main.py --cleanup
 ) else (
-    echo  Cancelled.
+    echo  %CD%Cancelled.%CR%
+    echo.
+    pause
+    goto MENU
 )
+set "rc=%errorlevel%"
 echo.
+call :STATUS %rc% "Cleanup"
 pause
 goto MENU
 
@@ -417,9 +439,14 @@ set /p apply="  Do you want to apply these removals to the database? (Y/N): "
 if /i "%apply%"=="Y" (
     python src\clean_names.py --apply
 ) else (
-    echo  Cancelled.
+    echo  %CD%Cancelled.%CR%
+    echo.
+    pause
+    goto MENU
 )
+set "rc=%errorlevel%"
 echo.
+call :STATUS %rc% "Clean titles"
 pause
 goto MENU
 
@@ -427,6 +454,12 @@ goto MENU
 cls
 call setup_env.bat
 goto START
+
+:STATUS
+:: Print a colored result line. %1 = exit code (capture %errorlevel% into a
+:: var on the line right after the command, then pass it here). %2 = quoted op.
+if "%~1"=="0" ( echo  %CG%[ OK ]%CR% %~2 completed. ) else ( echo  %CE%[FAIL]%CR% %~2 failed ^(exit %~1^). )
+goto :eof
 
 :CHOOSE_MODEL
 :: Prompts for the AI provider/model and sets %AIFLAGS% for the python call.
