@@ -1201,12 +1201,13 @@
                 if (showPosters) {
                     if (poster) {
                         if (autoLoadImages) {
-                            posterHtml = `<div class="poster-container"><img src="${escapeHtml(poster)}" class="poster-img loaded" alt="${escapeHtml(title)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="poster-placeholder" style="display:none">🎬</div></div>`;
+                            posterHtml = `<div class="poster-container"><img src="${escapeHtml(poster)}" class="poster-img loaded" alt="${escapeHtml(title)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="poster-placeholder poster-fallback" style="display:none">🎬</div></div>`;
                         } else {
-                            posterHtml = ` <div class="poster-container" > <img data-src="${escapeHtml(poster)}" class="poster-img" alt="${escapeHtml(title)}"
-                            onclick="loadPosterImage(this)"
-                            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" > <div class="poster-placeholder" style="display:none" >🎬</div> <div class="poster-placeholder" onclick="loadPosterImage(this.previousElementSibling.previousElementSibling)"
-                            style="cursor:pointer;font-size:1.5em;" title="Click to load poster" >🖼️ Click to load</div> </div>`;
+                            // Lazy: load on click. The img/prompt carry
+                            // data-action="load-poster"; the delegated handler
+                            // resolves the container, so we avoid fragile
+                            // nextElementSibling chains.
+                            posterHtml = `<div class="poster-container"><img data-src="${escapeHtml(poster)}" class="poster-img" alt="${escapeHtml(title)}" data-action="load-poster"><div class="poster-placeholder poster-fallback" style="display:none">🎬</div><div class="poster-placeholder poster-loadprompt" data-action="load-poster" style="cursor:pointer;font-size:1.5em;" title="Click to load poster">🖼️ Click to load</div></div>`;
                         }
                     } else {
                         posterHtml = ` <div class="poster-container" > <div class="poster-placeholder" >🎬</div> </div>`;
@@ -1245,24 +1246,31 @@
             }
         }
 
-        function loadPosterImage(img) {
-            if (img.tagName !== 'IMG') return;
+        // Load a lazy poster given any element inside its container. Resolves
+        // the img/prompt/fallback by class (not sibling position) and handles
+        // BOTH outcomes: on success hide the prompt; on error hide the prompt
+        // AND show the 🎬 fallback. The old version only handled success, so a
+        // poster that 404'd left a "Click to load" prompt stuck forever.
+        function loadPosterImage(el) {
+            const container = el.closest('.poster-container');
+            if (!container) return;
+            const img = container.querySelector('img.poster-img');
+            const prompt = container.querySelector('.poster-loadprompt');
+            const fallback = container.querySelector('.poster-fallback');
+            if (!img) return;
             const src = img.getAttribute('data-src');
+            if (!src || img.src) return;  // already loading/loaded
 
-            if (src && !img.src) {
-                img.src = src;
-
-                img.onload = () => {
-                    img.classList.add('loaded');
-
-                    // Hide the "click to load" placeholder
-                    if (img.nextElementSibling && img.nextElementSibling.nextElementSibling) {
-                        img.nextElementSibling.nextElementSibling.style.display = 'none';
-                    }
-                }
-
-                    ;
-            }
+            img.onload = () => {
+                img.classList.add('loaded');
+                if (prompt) prompt.style.display = 'none';
+            };
+            img.onerror = () => {
+                img.style.display = 'none';
+                if (prompt) prompt.style.display = 'none';
+                if (fallback) fallback.style.display = 'flex';
+            };
+            img.src = src;
         }
 
         // Escape untrusted strings for safe insertion into HTML. Quotes are
@@ -1642,6 +1650,10 @@
         // onclick="showInfo(${JSON.stringify(movie)})" pattern caused for
         // titles/plots containing quotes, newlines, or angle brackets.
         document.getElementById('movieContainer').addEventListener('click', (e) => {
+            // Lazy poster load (img or "click to load" prompt)
+            const posterEl = e.target.closest('[data-action="load-poster"]');
+            if (posterEl) { loadPosterImage(posterEl); return; }
+
             const btn = e.target.closest('button[data-action]');
             if (!btn) return;
             const card = btn.closest('.movie-card');
