@@ -241,12 +241,14 @@
             return String(text).replace(/[&<>"']/g, c => _HTML_ESCAPES[c]);
         }
 
-        // Only allow http(s) poster URLs; reject anything else (e.g. an
-        // attribute-breakout payload or a javascript:/data: scheme).
+        // Only allow absolute http(s) poster URLs (what OMDb returns); reject
+        // anything else (a javascript:/data: scheme, or an attribute-breakout
+        // payload, which is not an absolute URL). Parsing without a base means
+        // relative/garbage values throw and are rejected.
         function safePosterUrl(url) {
             if (!url || url === 'NA') return null;
             try {
-                const u = new URL(url, window.location.href);
+                const u = new URL(url);
                 return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : null;
             } catch (e) {
                 return null;

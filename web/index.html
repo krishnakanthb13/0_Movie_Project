@@ -1038,26 +1038,17 @@
                 }
             });
 
-            // Populate Genre Dropdown
-            const genreSelect = document.getElementById('genreSelect');
-            genreSelect.innerHTML = '<option value="">Genres: All</option>';
-            [...genres].sort().forEach(g => {
-                genreSelect.innerHTML += `<option value="${g}">${g}</option>`;
-            });
-
-            // Populate Year Dropdown
-            const yearSelect = document.getElementById('yearSelect');
-            yearSelect.innerHTML = '<option value="">Years: All</option>';
-            [...years].sort().reverse().forEach(y => {
-                yearSelect.innerHTML += `<option value="${y}">${y}</option>`;
-            });
-
-            // Populate Language Dropdown
-            const langSelect = document.getElementById('langSelect');
-            langSelect.innerHTML = '<option value="">Language: All</option>';
-            [...languages].sort().forEach(l => {
-                langSelect.innerHTML += `<option value="${l}">${l}</option>`;
-            });
+            // Populate dropdowns using new Option(), which sets text/value via
+            // properties (no HTML parsing), so untrusted genre/language strings
+            // from OMDb can't inject markup.
+            const fillSelect = (select, allLabel, values) => {
+                select.innerHTML = '';
+                select.add(new Option(allLabel, ''));
+                values.forEach(v => select.add(new Option(v, v)));
+            };
+            fillSelect(document.getElementById('genreSelect'), 'Genres: All', [...genres].sort());
+            fillSelect(document.getElementById('yearSelect'), 'Years: All', [...years].sort().reverse());
+            fillSelect(document.getElementById('langSelect'), 'Language: All', [...languages].sort());
 
             filterMovies();
         }
@@ -1196,7 +1187,7 @@
             displayMovies.forEach(movie => {
                 const title = movie.title !== 'NA' ? movie.title : (movie.ai_title !== 'NA' ? movie.ai_title : movie.extracted_name);
                 const year = movie.year !== 'NA' ? movie.year : movie.extracted_year;
-                const poster = movie.poster && movie.poster !== 'NA' ? movie.poster : null;
+                const poster = safePosterUrl(movie.poster);
                 const rating = movie.imdb_rating && movie.imdb_rating !== 'NA' ? movie.imdb_rating : null;
                 const genre = movie.genre && movie.genre !== 'NA' ? movie.genre.split(',')[0].trim() : null;
 
@@ -1210,9 +1201,9 @@
                 if (showPosters) {
                     if (poster) {
                         if (autoLoadImages) {
-                            posterHtml = `<div class="poster-container"><img src="${poster}" class="poster-img loaded" alt="${escapeHtml(title)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="poster-placeholder" style="display:none">🎬</div></div>`;
+                            posterHtml = `<div class="poster-container"><img src="${escapeHtml(poster)}" class="poster-img loaded" alt="${escapeHtml(title)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="poster-placeholder" style="display:none">🎬</div></div>`;
                         } else {
-                            posterHtml = ` <div class="poster-container" > <img data-src="${poster}" class="poster-img" alt="${escapeHtml(title)}"
+                            posterHtml = ` <div class="poster-container" > <img data-src="${escapeHtml(poster)}" class="poster-img" alt="${escapeHtml(title)}"
                             onclick="loadPosterImage(this)"
                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" > <div class="poster-placeholder" style="display:none" >🎬</div> <div class="poster-placeholder" onclick="loadPosterImage(this.previousElementSibling.previousElementSibling)"
                             style="cursor:pointer;font-size:1.5em;" title="Click to load poster" >🖼️ Click to load</div> </div>`;
@@ -1281,6 +1272,20 @@
         function escapeHtml(text) {
             if (text === null || text === undefined) return '';
             return String(text).replace(/[&<>"']/g, c => _HTML_ESCAPES[c]);
+        }
+
+        // Only allow absolute http(s) poster URLs (what OMDb returns); reject
+        // anything else (a javascript:/data: scheme, or an attribute-breakout
+        // payload like  x" onerror=...  which is not an absolute URL). Parsing
+        // without a base means relative/garbage values throw and are rejected.
+        function safePosterUrl(url) {
+            if (!url || url === 'NA') return null;
+            try {
+                const u = new URL(url);
+                return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : null;
+            } catch (e) {
+                return null;
+            }
         }
 
         function filterMovies() {
@@ -1353,8 +1358,9 @@
             const displayTitle = movie.title !== 'NA' ? movie.title : (movie.ai_title !== 'NA' ? movie.ai_title : movie.extracted_name);
             title.textContent = displayTitle || 'Movie Details';
 
-            const posterHtml = movie.poster && movie.poster !== 'NA'
-                ? `<img src = "${movie.poster}" class="modal-poster" alt = "${escapeHtml(displayTitle)}" > ` : '';
+            const modalPoster = safePosterUrl(movie.poster);
+            const posterHtml = modalPoster
+                ? `<img src="${escapeHtml(modalPoster)}" class="modal-poster" alt="${escapeHtml(displayTitle)}">` : '';
 
             const infoItems = [{
                 label: 'Year', value: movie.year
@@ -1437,7 +1443,7 @@
                 }).filter(item => item !== null);
 
                 if (additionalItems.length > 0) {
-                    additionalInfoHtml = ` <div class="info-item" style = "grid-column: 1 / -1; margin-top: 10px;" ><div class="info-label" style="font-size: 0.85em; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px;">Additional Details</div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">${additionalItems.map(item => `<div> <div class="info-label" >${item.label}</div> <div class="info-value" >${escapeHtml(item.value)}</div> </div> `).join('')}</div></div>`;
+                    additionalInfoHtml = ` <div class="info-item" style = "grid-column: 1 / -1; margin-top: 10px;" ><div class="info-label" style="font-size: 0.85em; color: var(--text-secondary); border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px;">Additional Details</div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">${additionalItems.map(item => `<div> <div class="info-label" >${escapeHtml(item.label)}</div> <div class="info-value" >${escapeHtml(item.value)}</div> </div> `).join('')}</div></div>`;
                 }
             }
 
