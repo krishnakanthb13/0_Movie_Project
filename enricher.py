@@ -311,27 +311,31 @@ def enrich_with_ai_bulk(limit: Optional[int] = None) -> int:
     
     logger.info(f"Starting BULK AI enrichment for {len(movies)} movies...")
     
-    # Process in chunks
-    CHUNK_SIZE = 50  # Maximum movies per API call
+    # Process in chunks. Chunk size comes from config.BATCH_SIZE so it can be
+    # tuned (smaller chunks are faster per call and less likely to time out on
+    # search-grounded providers).
+    from config import BATCH_SIZE
+    CHUNK_SIZE = BATCH_SIZE if BATCH_SIZE and BATCH_SIZE > 0 else 50
     enriched_count = 0
-    
+
     for i in range(0, len(movies), CHUNK_SIZE):
         chunk = movies[i : i + CHUNK_SIZE]
         logger.info(f"Processing chunk {i//CHUNK_SIZE + 1} ({len(chunk)} movies)...")
-        
+
         try:
             # Single API call for entire chunk
             results = identify_movies_bulk(chunk)
-            
-            # Create UUID -> result mapping
-            results_map = {r.get("id"): r for r in results if r.get("id")}
-            
+
+            # Create UUID -> result mapping. Stringify the returned id so an
+            # LLM that echoes the uuid as a number still matches.
+            results_map = {str(r.get("id")): r for r in results if r.get("id") is not None}
+
             # Update each movie in the chunk
             for movie in chunk:
                 uuid_val = movie["uuid"]
-                
-                if uuid_val in results_map:
-                    res = results_map[uuid_val]
+
+                if str(uuid_val) in results_map:
+                    res = results_map[str(uuid_val)]
                     
                     updates = {
                         "ai_title": res.get("movie_title", "NA"),
@@ -507,8 +511,14 @@ def enrich_with_omdb(limit: Optional[int] = None) -> int:
                 
         except Exception as e:
             logger.error(f"  -> Error: {e}")
+            # Mark as failed (state 4) so --retry-failed can pick it up later,
+            # rather than leaving it stuck at state 2. Guard the write itself.
+            try:
+                update_sqlite_record(movie["uuid"], {"is_active": 4})
+            except Exception:
+                pass
             continue
-    
+
     # Sync to CSV
     sync_sqlite_to_csv()
     
