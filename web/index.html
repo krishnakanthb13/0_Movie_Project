@@ -1179,11 +1179,15 @@
                 return;
             }
 
-            // Sort: Enriched first, then by year desc
+            // Sort: Enriched first, then by year desc.
+            // year is a string ("1999", "NA", ""), so coerce to a number and
+            // treat non-numeric values as 0. Using `b.year || 0` directly left
+            // "NA" as a string, making the subtraction NaN and the sort order
+            // undefined.
             movies.sort((a, b) => {
                 if (a.ai_title !== 'NA' && b.ai_title === 'NA') return -1;
                 if (a.ai_title === 'NA' && b.ai_title !== 'NA') return 1;
-                return (b.year || 0) - (a.year || 0);
+                return (parseInt(b.year, 10) || 0) - (parseInt(a.year, 10) || 0);
             });
 
             // Limit rendering for performance (first 100)
