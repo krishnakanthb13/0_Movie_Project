@@ -442,8 +442,8 @@ echo   (Groq options require GROQ_API_KEY in .env)
 echo.
 set /p mc="  Choice [1]: "
 if "%mc%"=="" set mc=1
-set "AIFLAGS="
-if "%mc%"=="2" set "AIFLAGS=--model 3.5"
+set "AIFLAGS=--provider gemini --model 2.5"
+if "%mc%"=="2" set "AIFLAGS=--provider gemini --model 3.5"
 if "%mc%"=="3" set "AIFLAGS=--provider groq --model llama-3.3-70b-versatile"
 if "%mc%"=="4" set "AIFLAGS=--provider groq --model groq/compound"
 if "%mc%"=="5" goto :CHOOSE_MODEL_CUSTOM

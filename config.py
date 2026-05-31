@@ -248,11 +248,12 @@ NOISE_PATTERNS = [
     r"\bBluRay\b", r"\bBlu-Ray\b", r"\bBRRip\b", r"\bBDRip\b",
     r"\bWEBRip\b", r"\bWEB-DL\b", r"\bWEBDL\b", r"\bHDRip\b", r"\bDVDRip\b",
 
-    # Video codecs
-    r"\bx264\b", r"\bx265\b", r"\bHEVC\b", r"\bH\.264\b", r"\bH\.265\b",
+    # Video codecs. Note: parser replaces . with a space BEFORE noise removal,
+    # so "H.264" arrives as "H 264" and "5.1" as "5 1" - match the space forms.
+    r"\bx264\b", r"\bx265\b", r"\bHEVC\b", r"\bH 264\b", r"\bH 265\b",
 
     # Audio codecs and channels
-    r"\bAAC\b", r"\bAC3\b", r"\bDTS\b", r"\b5\.1\b", r"\b7\.1\b",
+    r"\bAAC\b", r"\bAC3\b", r"\bDTS\b", r"\b5 1\b", r"\b7 1\b",
 
     # Release groups (common ones)
     r"\bYIFY\b", r"\bRARBG\b", r"\bYTS\b", r"\bETRG\b", r"\bEVO\b",
