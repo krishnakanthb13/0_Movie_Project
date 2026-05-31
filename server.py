@@ -568,12 +568,19 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_error(404, "File does not exist on disk")
                 return
             
-            # Windows-specific: select file in explorer
-            # /select highlights the file in its containing folder.
-            # Use the argument-list form (not a formatted shell string) so
-            # paths with spaces, quotes, or other special characters are
-            # passed verbatim instead of being re-parsed by the shell.
-            subprocess.Popen(["explorer", f"/select,{full_path_obj}"])
+            # Windows-specific: select the file in Explorer. /select is a
+            # quirky verb that requires the exact command line
+            #   explorer /select,"<path>"
+            # with /select, OUTSIDE the quotes and only the path quoted. A
+            # subprocess argument list cannot produce that: Python quotes the
+            # whole "/select,<path with spaces>" token, which Explorer fails
+            # to parse and then falls back to opening the default (Documents)
+            # folder. So build the command line as a string. This is safe:
+            # shell=False (the string goes straight to CreateProcess, no shell
+            # parsing), the path comes from our database (only the uuid is
+            # request-supplied) and was just verified to exist, and Windows
+            # paths cannot contain the '"' that would break the quoting.
+            subprocess.Popen(f'explorer /select,"{full_path_obj}"')
             self.send_json({"status": "success", "message": f"Opened folder for {movie['file_name']}"})
                 
         except Exception as e:
