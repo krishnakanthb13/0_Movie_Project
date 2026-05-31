@@ -229,12 +229,15 @@
             border: 1px solid rgba(255, 82, 82, 0.2);
             width: 40px;
             height: 40px;
-            display: flex;
+            /* Hidden by default; shown via JS as display:flex (which also
+               centers the icon) when a filter is active. */
+            display: none;
             align-items: center;
             justify-content: center;
             border-radius: 10px;
             font-size: 1.2em;
             padding: 0;
+            cursor: pointer;
             transition: all 0.2s;
         }
 
@@ -720,7 +723,7 @@
                 padding: 15px;
             }
 
-            header {
+            .compact-header {
                 flex-direction: column;
                 gap: 15px;
                 text-align: center;
@@ -747,13 +750,8 @@
             .filter-section {
                 padding: 12px;
             }
-
-            .filter-section {
-                padding: 12px;
-            }
         }
 
-        /* List View Styles */
         /* List View Styles */
         .movie-grid.list-view {
             display: flex;
@@ -819,23 +817,6 @@
             transform: scale(1.1);
         }
 
-        .clear-filters-btn {
-            background: rgba(255, 87, 87, 0.1);
-            color: #ff5757;
-            border: 1px solid rgba(255, 87, 87, 0.3);
-            font-size: 0.8em;
-            padding: 4px 12px;
-            border-radius: 12px;
-            cursor: pointer;
-            display: none;
-            /* Hidden by default */
-            margin-left: auto;
-        }
-
-        .clear-filters-btn:hover {
-            background: rgba(255, 87, 87, 0.2);
-            transform: none;
-        }
     </style>
 </head>
 
@@ -1061,7 +1042,7 @@
 
             // Show clear button if any filter is active
             const hasActive = Object.values(activeFilters).some(v => v !== null && v !== "");
-            document.getElementById('clearFiltersBtn').style.display = hasActive ? 'block' : 'none';
+            document.getElementById('clearFiltersBtn').style.display = hasActive ? 'flex' : 'none';
 
             filterMovies();
         }
