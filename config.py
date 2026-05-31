@@ -206,29 +206,32 @@ SERVER_PORT = 8010
 # encoding formats, and other non-title content in movie filenames.
 # Order doesn't matter - all patterns are applied.
 # Type: List[str] (regex patterns)
+# Word-like tokens are wrapped in \b...\b boundaries so they only match as
+# whole words. Without boundaries, patterns like "EVO" or "PROPER" matched
+# inside real title words ("Evolution" -> "lution", "Proper Lies" -> "Lies").
 NOISE_PATTERNS = [
     # Video quality indicators
-    r"1080p", r"720p", r"480p", r"2160p", r"4K",
-    
+    r"\b1080p\b", r"\b720p\b", r"\b480p\b", r"\b2160p\b", r"\b4K\b",
+
     # Source types
-    r"BluRay", r"Blu-Ray", r"BRRip", r"BDRip",
-    r"WEBRip", r"WEB-DL", r"WEBDL", r"HDRip", r"DVDRip",
-    
+    r"\bBluRay\b", r"\bBlu-Ray\b", r"\bBRRip\b", r"\bBDRip\b",
+    r"\bWEBRip\b", r"\bWEB-DL\b", r"\bWEBDL\b", r"\bHDRip\b", r"\bDVDRip\b",
+
     # Video codecs
-    r"x264", r"x265", r"HEVC", r"H\.264", r"H\.265",
-    
+    r"\bx264\b", r"\bx265\b", r"\bHEVC\b", r"\bH\.264\b", r"\bH\.265\b",
+
     # Audio codecs and channels
-    r"AAC", r"AC3", r"DTS", r"5\.1", r"7\.1",
-    
+    r"\bAAC\b", r"\bAC3\b", r"\bDTS\b", r"\b5\.1\b", r"\b7\.1\b",
+
     # Release groups (common ones)
-    r"YIFY", r"RARBG", r"YTS", r"ETRG", r"EVO",
-    
+    r"\bYIFY\b", r"\bRARBG\b", r"\bYTS\b", r"\bETRG\b", r"\bEVO\b",
+
     # Video features
-    r"HDR", r"SDR", r"10bit", r"8bit",
-    
+    r"\bHDR\b", r"\bSDR\b", r"\b10bit\b", r"\b8bit\b",
+
     # Edition markers
-    r"EXTENDED", r"UNRATED", r"REMASTERED", r"PROPER",
-    
+    r"\bEXTENDED\b", r"\bUNRATED\b", r"\bREMASTERED\b", r"\bPROPER\b",
+
     # Bracketed content (often contains additional info)
     r"\[.*?\]",  # Square brackets and contents
     r"\(.*?\)",  # Parentheses and contents (careful - may contain year)

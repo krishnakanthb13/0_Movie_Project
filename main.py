@@ -46,7 +46,7 @@ import logging
 import argparse
 from datetime import datetime
 
-from config import MOVIE_DIRECTORY, CSV_FILE, SQLITE_FILE
+from config import MOVIE_DIRECTORY, CSV_FILE, SQLITE_FILE, LOG_FILE
 from scanner import scan_directory, get_all_videos
 from parser import parse_filename
 from storage import (
@@ -75,9 +75,13 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.StreamHandler(sys.stdout),       # Console output
-        logging.FileHandler("movie_library.log", encoding="utf-8")  # File log
-    ]
+        logging.StreamHandler(sys.stdout),                  # Console output
+        logging.FileHandler(LOG_FILE, encoding="utf-8")     # Single log file (data/enrichment.log)
+    ],
+    # force=True is required: imported modules (e.g. scanner.py) call
+    # logging.basicConfig() at import time, which runs first and would
+    # otherwise make this call a silent no-op, leaving file logging broken.
+    force=True
 )
 logger = logging.getLogger(__name__)
 

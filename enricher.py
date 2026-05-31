@@ -44,7 +44,7 @@ import logging
 import time
 from typing import List, Dict, Optional
 
-from config import AI_REQUEST_DELAY, LOG_FILE
+from config import AI_REQUEST_DELAY
 from storage import (
     get_unenriched_movies,
     get_movies_without_omdb,
@@ -66,12 +66,9 @@ import re
 
 logger = logging.getLogger(__name__)
 
-# Create file handler for persistent enrichment logs
-# Useful for debugging failed enrichments and tracking progress
-file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
-file_handler.setLevel(logging.DEBUG)
-file_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-logger.addHandler(file_handler)
+# Logging is configured centrally in main.py (single file: data/enrichment.log)
+# and propagates here via the root logger. We no longer attach a separate file
+# handler, which previously produced a second, duplicate log destination.
 
 
 # =============================================================================
