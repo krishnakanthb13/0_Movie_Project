@@ -193,18 +193,26 @@ http://localhost:8010
 | 👁️ **Views** | Toggle Grid / List view modes |
 | 🖼️ **Posters / ⚡ Auto-Images** | Toggle poster visibility / auto-loading for performance |
 | 🌗 **Theme toggle** | Switch light/dark (dark default, persisted to `localStorage`) |
-| ⌨️ **Keyboard shortcuts** | `/` focuses search, `r` surprise me, `Esc` closes modals |
+| ⌨️ **Keyboard shortcuts** | `/` focuses search, `r` surprise me, `Esc` closes modals, **arrow keys** move a focus ring between cards, **Enter** opens the focused card |
+| ⭐ **Min IMDb filter** | Quick Any / 7+ / 8+ rating filter (integrated with the chips + count) |
+| 📊 **Library stats** | Collapsible panel: totals, average IMDb rating, your-rated count, and clickable top-genre chips |
+| 🔳 **Density** | Comfortable / Compact grid (persisted) |
+| ⬆️ **Scroll to top** | Floating button after scrolling |
 
-> **Premium media dashboard (v1.4.0):** the viewer now renders incrementally with a
-> **Load more** button plus infinite scroll (replacing the old fixed 100-card cap), and
-> shows polished **skeleton** loading and **empty / error (with Retry)** states. All toggles
-> (theme, sort, view, posters, auto-images) persist across reloads.
+> **Premium media dashboard (v1.4.0+):** the viewer renders incrementally with a
+> **Load more** button plus infinite scroll (replacing the old fixed 100-card cap), shows
+> polished **skeleton** loading and **empty / error (with Retry)** states, and the detail
+> modal parses extra ratings (Metacritic/Rotten Tomatoes) into score chips with genre/actor
+> chips and a blurred poster backdrop. All toggles persist across reloads.
 
 ### Enrichment Manager (`enrichment.html`)
 
-The admin page is restyled to match the viewer: segmented **Pending / Enriched** tabs with
-live counts, a quick search box, a premium info modal, skeleton/empty states, and the same
-light/dark theme toggle.
+The admin page matches the viewer's design: segmented **Pending / Enriched / Failed** tabs
+with live counts (the **Failed** tab surfaces movies that failed OMDb enrichment, state 4, so
+you can fix them), a quick search + sort, a premium info modal, skeleton/empty states, and the
+same light/dark theme toggle. Each row has **inline validation** (IMDb `tt…` id, 4-digit year,
+0–10 rating; Save enables only on a valid change) and **per-row quick actions** to ▶ Play and
+📂 open the folder. Failed rows offer a **Retry** action.
 
 ---
 
