@@ -136,24 +136,29 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
             return
         
         # -----------------------------------------------------------------
-        # ROOT PATH: Redirect to index.html
-        # -----------------------------------------------------------------
-        if path == "/":
-            self.path = "/index.html"
-        
-        # -----------------------------------------------------------------
         # STATIC FILE SERVING
-        # Maps URL paths to files in WEB_DIR
+        # Maps URL paths to files in WEB_DIR.
+        #
+        # Security: the requested path is URL-decoded, joined to WEB_DIR,
+        # and resolved to an absolute path. We then verify the result is
+        # still inside WEB_DIR before serving. This prevents path traversal
+        # attacks (e.g. "/../.env", "/../config.py") from leaking files
+        # outside the web root such as API keys or the database.
         # -----------------------------------------------------------------
-        if self.path == "/" or self.path == "/index.html":
-            file_path = WEB_DIR / "index.html"
+        if path == "/" or path == "/index.html":
+            file_path = (WEB_DIR / "index.html").resolve()
         else:
-            # Remove leading / and resolve to WEB_DIR
-            clean_path = self.path.lstrip("/")
-            file_path = WEB_DIR / clean_path
-        
-        # Serve file if it exists, else 404
-        if file_path.exists() and file_path.is_file():
+            # URL-decode (e.g. %2e%2e -> ..) and strip leading slashes
+            clean_path = urllib.parse.unquote(path).lstrip("/")
+            file_path = (WEB_DIR / clean_path).resolve()
+
+        # Confine to WEB_DIR: the resolved path must be the web root itself
+        # or live underneath it. Reject anything that escapes.
+        web_root = WEB_DIR.resolve()
+        is_within_root = file_path == web_root or web_root in file_path.parents
+
+        # Serve file if it is safely within WEB_DIR and exists
+        if is_within_root and file_path.is_file():
             self.send_file(file_path)
         else:
             self.send_error(404, "File not found")
