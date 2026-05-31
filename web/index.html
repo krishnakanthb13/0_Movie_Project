@@ -970,10 +970,23 @@
     </div>
 
     <script>
+        // UI preferences persist across reloads via localStorage.
+        function loadPref(key, def) {
+            try {
+                const v = localStorage.getItem(key);
+                return v === null ? def : JSON.parse(v);
+            } catch (e) {
+                return def;
+            }
+        }
+        function savePref(key, val) {
+            try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+        }
+
         let allMovies = [];
-        let showPosters = true;
-        let isListView = false;
-        let autoLoadImages = false;
+        let showPosters = loadPref('showPosters', true);
+        let isListView = loadPref('isListView', false);
+        let autoLoadImages = loadPref('autoLoadImages', false);
 
 
         let activeFilters = {
@@ -1084,6 +1097,7 @@
                 btn.textContent = '☰ List';
                 isListView = false;
             }
+            savePref('isListView', isListView);
         }
 
         function cycleView() {
@@ -1138,6 +1152,7 @@
 
         function toggleAutoImages() {
             autoLoadImages = !autoLoadImages;
+            savePref('autoLoadImages', autoLoadImages);
             const btn = document.getElementById('imageToggle');
             if (autoLoadImages) {
                 btn.classList.add('active');
@@ -1151,6 +1166,7 @@
 
         function togglePosters() {
             showPosters = !showPosters;
+            savePref('showPosters', showPosters);
             const btn = document.getElementById('posterToggle');
             const container = document.getElementById('movieContainer');
 
@@ -1676,7 +1692,24 @@
             }
         });
 
+        // Reflect persisted UI preferences in the controls/container before
+        // the first render, so a reload restores the user's chosen view,
+        // posters, and auto-image settings.
+        function applyViewPreferences() {
+            const container = document.getElementById('movieContainer');
+            const posterBtn = document.getElementById('posterToggle');
+            if (showPosters) { posterBtn.classList.remove('active'); container.classList.remove('no-posters'); }
+            else { posterBtn.classList.add('active'); container.classList.add('no-posters'); }
+
+            const imgBtn = document.getElementById('imageToggle');
+            if (autoLoadImages) { imgBtn.classList.add('active'); imgBtn.textContent = '⚡ Auto Images: ON'; }
+            else { imgBtn.classList.remove('active'); imgBtn.textContent = '⚡ Auto Images: OFF'; }
+
+            toggleView(isListView ? 'list' : 'grid');
+        }
+
         // Initial load
+        applyViewPreferences();
         loadMovies();
     </script>
 </body>
