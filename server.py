@@ -76,7 +76,16 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
         3. Execute handler logic (DB query, external command, etc.)
         4. Return appropriate response (JSON, HTML, file, error)
     """
-    
+
+    # Drop a request whose client stops sending (or never finishes the body),
+    # so a slow/incomplete request can't pin a worker thread indefinitely.
+    timeout = 30
+
+    # Cap the request body we will read, so a large/forged Content-Length
+    # can't force a huge allocation (memory DoS).
+    MAX_BODY = 1 * 1024 * 1024  # 1 MiB
+
+
     # -------------------------------------------------------------------------
     # GET REQUEST HANDLER
     # -------------------------------------------------------------------------
@@ -168,10 +177,23 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
         parsed_url = urllib.parse.urlparse(self.path)
         path = parsed_url.path
         
-        # Read and parse request body
-        content_length = int(self.headers.get('Content-Length', 0))
-        post_data = self.rfile.read(content_length).decode('utf-8')
-        
+        # Read and parse request body. Guard the Content-Length: a malformed
+        # (non-numeric/negative) value must not crash the handler, and an
+        # oversized one must be rejected rather than allocated.
+        try:
+            content_length = int(self.headers.get('Content-Length', 0) or 0)
+        except ValueError:
+            self.send_error(400, "Invalid Content-Length")
+            return
+        if content_length < 0:
+            self.send_error(400, "Invalid Content-Length")
+            return
+        if content_length > self.MAX_BODY:
+            self.send_error(413, "Payload too large")
+            return
+
+        post_data = self.rfile.read(content_length).decode('utf-8', errors='replace')
+
         try:
             data = json.loads(post_data) if post_data else {}
         except json.JSONDecodeError:
@@ -329,7 +351,7 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
             
         except Exception as e:
             logger.error(f"Manual enrichment error: {e}")
-            self.send_json({"status": "error", "message": str(e)})
+            self.send_json({"status": "error", "message": "Enrichment failed (see server log)"})
 
     # -------------------------------------------------------------------------
     # METADATA UPDATE HANDLER
@@ -357,8 +379,14 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_json({"status": "error", "message": "Missing movie UUID"})
                 return
 
+            # Verify the movie exists, so we don't report success for a UUID
+            # that updated zero rows.
+            if not get_movie_by_uuid(uuid_val):
+                self.send_json({"status": "error", "message": "Movie not found"})
+                return
+
             updates = {}
-            
+
             # Handle user rating
             if "user_rating" in data:
                 updates["user_rating"] = str(data["user_rating"])
@@ -384,7 +412,7 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
             
         except Exception as e:
             logger.error(f"Metadata update error: {e}")
-            self.send_json({"status": "error", "message": str(e)})
+            self.send_json({"status": "error", "message": "Update failed (see server log)"})
 
     # -------------------------------------------------------------------------
     # RESPONSE HELPERS
@@ -421,6 +449,15 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("X-Frame-Options", "DENY")
 
+    def send_response(self, code, message=None):
+        """
+        Override to attach security headers to EVERY response, including the
+        stdlib send_error() error pages (which call send_response internally),
+        not just our send_json/send_file paths.
+        """
+        super().send_response(code, message)
+        self.send_security_headers()
+
     def send_json(self, data: Any):
         """
         Send JSON response to client.
@@ -441,7 +478,7 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
         # app, and the wildcard let any website read the movie list and
         # responses cross-origin. Same-origin requests from the bundled UI
         # are unaffected.
-        self.send_security_headers()
+        # (Security headers are added by the send_response override.)
         self.end_headers()
         self.wfile.write(json.dumps(data).encode("utf-8"))
 
@@ -482,7 +519,7 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
                 ctype = "application/octet-stream"
             
             self.send_header("Content-type", ctype)
-            self.send_security_headers()
+            # (Security headers are added by the send_response override.)
             self.end_headers()
             self.wfile.write(content)
             
