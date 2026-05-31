@@ -46,6 +46,17 @@ import logging
 import argparse
 from datetime import datetime
 
+# Make console output crash-proof for emoji/unicode on a non-UTF-8 Windows
+# console. MovieLibrary.bat sets `chcp 65001`, but running the CLI directly
+# can leave stdout on cp1252, where printing characters like ❌/✅ raises
+# UnicodeEncodeError. Re-encode as UTF-8 (replacing anything unencodable)
+# instead of failing.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
 from config import MOVIE_DIRECTORY, CSV_FILE, SQLITE_FILE, LOG_FILE
 from scanner import scan_directory, get_all_videos
 from parser import parse_filename
