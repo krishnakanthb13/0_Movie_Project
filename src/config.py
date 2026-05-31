@@ -32,7 +32,9 @@ from dotenv import load_dotenv
 #   GEMINI_API_KEY=your_key_here
 #   OMDB_API_KEY=your_key_here
 
-load_dotenv()
+# Load .env from the repo root explicitly (this file lives in src/), so the
+# keys are found regardless of the current working directory.
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 # =============================================================================
 # DIRECTORY SETTINGS
@@ -46,11 +48,11 @@ load_dotenv()
 # Default: E:/ (common external drive letter on Windows)
 MOVIE_DIRECTORY = Path("E:/")
 
-# PROJECT_ROOT: Absolute path to the project directory.
-# Automatically detected based on the location of this config file.
-# Used as base path for relative directory calculations.
+# PROJECT_ROOT: Absolute path to the project (repo) root directory.
+# This file lives in src/, so the project root is its PARENT's parent.
+# Used as base path for data/ and web/ (which stay at the repo root).
 # Type: Path
-PROJECT_ROOT = Path(__file__).parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # DATA_DIR: Directory where CSV and SQLite database files are stored.
 # Created automatically if it doesn't exist.

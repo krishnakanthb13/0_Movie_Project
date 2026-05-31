@@ -97,7 +97,7 @@ echo  ========================================
 echo   FULL SCAN - Indexing all videos...
 echo  ========================================
 echo.
-python main.py --scan
+python src\main.py --scan
 echo.
 echo  Scan complete!
 pause
@@ -110,7 +110,7 @@ echo  ========================================
 echo   QUICK SCAN - First 50 files...
 echo  ========================================
 echo.
-python main.py --scan --limit 50
+python src\main.py --scan --limit 50
 echo.
 pause
 goto MENU
@@ -122,7 +122,7 @@ set /p limit="  Enter number of files to scan: "
 echo.
 echo  Scanning %limit% files...
 echo.
-python main.py --scan --limit %limit%
+python src\main.py --scan --limit %limit%
 echo.
 pause
 goto MENU
@@ -132,7 +132,7 @@ cls
 echo.
 echo  Fetching Database Statistics...
 echo.
-python main.py --stats
+python src\main.py --stats
 echo.
 pause
 goto MENU
@@ -140,7 +140,7 @@ goto MENU
 :SAMPLE_10
 cls
 echo.
-python main.py --sample 10
+python src\main.py --sample 10
 echo.
 pause
 goto MENU
@@ -150,7 +150,7 @@ cls
 echo.
 set /p count="  Enter number of samples to show: "
 echo.
-python main.py --sample %count%
+python src\main.py --sample %count%
 echo.
 pause
 goto MENU
@@ -160,7 +160,7 @@ cls
 echo.
 echo  Syncing CSV to SQLite...
 echo.
-python main.py --sync
+python src\main.py --sync
 echo.
 echo  Sync complete!
 pause
@@ -194,9 +194,9 @@ if "%limit%"=="" set limit=10
 call :CHOOSE_MODEL
 
 if /i "%limit%"=="all" (
-    python main.py --enrich %AIFLAGS%
+    python src\main.py --enrich %AIFLAGS%
 ) else (
-    python main.py --enrich %AIFLAGS% --limit %limit%
+    python src\main.py --enrich %AIFLAGS% --limit %limit%
 )
 echo.
 pause
@@ -218,9 +218,9 @@ if "%limit%"=="" set limit=50
 call :CHOOSE_MODEL
 
 if /i "%limit%"=="all" (
-    python main.py --enrich --bulk %AIFLAGS%
+    python src\main.py --enrich --bulk %AIFLAGS%
 ) else (
-    python main.py --enrich --bulk %AIFLAGS% --limit %limit%
+    python src\main.py --enrich --bulk %AIFLAGS% --limit %limit%
 )
 echo.
 pause
@@ -242,15 +242,15 @@ if "%limit%"=="" set limit=50
 call :CHOOSE_MODEL
 
 if /i "%limit%"=="all" (
-    python main.py --enrich --bulk %AIFLAGS%
+    python src\main.py --enrich --bulk %AIFLAGS%
     echo.
     echo  [Step 1 Complete] Starting OMDb fetch...
-    python main.py --fetch-omdb
+    python src\main.py --fetch-omdb
 ) else (
-    python main.py --enrich --bulk %AIFLAGS% --limit %limit%
+    python src\main.py --enrich --bulk %AIFLAGS% --limit %limit%
     echo.
     echo  [Step 1 Complete] Starting OMDb fetch...
-    python main.py --fetch-omdb --limit %limit%
+    python src\main.py --fetch-omdb --limit %limit%
 )
 echo.
 pause
@@ -270,9 +270,9 @@ set /p limit="  Enter limit (default 10, 'all' for all): "
 if "%limit%"=="" set limit=10
 
 if /i "%limit%"=="all" (
-    python main.py --fetch-omdb
+    python src\main.py --fetch-omdb
 ) else (
-    python main.py --fetch-omdb --limit %limit%
+    python src\main.py --fetch-omdb --limit %limit%
 )
 echo.
 pause
@@ -292,11 +292,11 @@ echo.
 call :CHOOSE_MODEL
 
 if /i "%limit%"=="all" (
-    python main.py --enrich %AIFLAGS%
-    python main.py --fetch-omdb
+    python src\main.py --enrich %AIFLAGS%
+    python src\main.py --fetch-omdb
 ) else (
-    python main.py --enrich %AIFLAGS% --limit %limit%
-    python main.py --fetch-omdb --limit %limit%
+    python src\main.py --enrich %AIFLAGS% --limit %limit%
+    python src\main.py --fetch-omdb --limit %limit%
 )
 echo.
 pause
@@ -316,9 +316,9 @@ set /p limit="  Enter limit (default 'all'): "
 if "%limit%"=="" set limit=all
 
 if /i "%limit%"=="all" (
-    python main.py --retry-failed
+    python src\main.py --retry-failed
 ) else (
-    python main.py --retry-failed --limit %limit%
+    python src\main.py --retry-failed --limit %limit%
 )
 echo.
 pause
@@ -334,7 +334,7 @@ echo.
 echo  Server will start at http://localhost:8010
 echo  Press Ctrl+C to stop the server.
 echo.
-python server.py
+python src\server.py
 pause
 goto MENU
 
@@ -345,7 +345,7 @@ echo  ========================================
 echo   PARSER TEST
 echo  ========================================
 echo.
-python parser.py
+python src\parser.py
 echo.
 pause
 goto MENU
@@ -363,14 +363,14 @@ echo  ========================================
 echo   COMMAND LINE HELP
 echo  ========================================
 echo.
-python main.py --help
+python src\main.py --help
 echo.
 pause
 goto MENU
 
 :RESET
 cls
-python reset_data.py
+python src\reset_data.py
 pause
 goto MENU
 
@@ -386,11 +386,11 @@ echo  whose files no longer exist on disk.
 echo.
 echo  Step 1: Checking for missing files...
 echo.
-python main.py --check-missing
+python src\main.py --check-missing
 echo.
 set /p confirm="  Remove these movies from database? (Y/N): "
 if /i "%confirm%"=="Y" (
-    python main.py --cleanup
+    python src\main.py --cleanup
 ) else (
     echo  Cancelled.
 )
@@ -411,11 +411,11 @@ echo  parsed as part of the title.
 echo.
 echo  Step 1: Perform dry run (find recurring words)
 echo.
-python clean_names.py
+python src\clean_names.py
 echo.
 set /p apply="  Do you want to apply these removals to the database? (Y/N): "
 if /i "%apply%"=="Y" (
-    python clean_names.py --apply
+    python src\clean_names.py --apply
 ) else (
     echo  Cancelled.
 )
