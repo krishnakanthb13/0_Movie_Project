@@ -1026,11 +1026,18 @@
                     m.genre.split(',').forEach(g => genres.add(g.trim()));
                 }
 
-                const year = m.year !== 'NA' ? m.year : m.extracted_year;
+                // Prefer the OMDb year, falling back to the parsed year; the
+                // && guard also handles empty-string (not just the literal 'NA').
+                const year = (m.year && m.year !== 'NA') ? m.year : m.extracted_year;
 
                 if (year && year !== 'NA') {
-                    const decade = Math.floor(parseInt(year) / 10) * 10;
-                    if (decade >= 1950 && decade <= 2020) years.add(decade + 's');
+                    const parsed = parseInt(year, 10);
+                    // No hard 1950-2020 clamp (it hid older/newer films from the
+                    // decade filter); just drop obviously-garbage years.
+                    if (parsed >= 1880 && parsed <= 2100) {
+                        const decade = Math.floor(parsed / 10) * 10;
+                        years.add(decade + 's');
+                    }
                 }
 
                 if (m.language && m.language !== 'NA') {
