@@ -43,6 +43,7 @@ echo  ║   [B] OMDb Enrichment                                        ║
 echo  ║   [C] Full Enrichment (AI + OMDb) - Line by Line             ║
 echo  ║   [K] Bulk AI Enrichment (Text-Only, User Configured Model)  ║
 echo  ║   [L] Full Bulk Enrichment (Bulk AI + OMDb)                  ║
+echo  ║   [F] Retry Failed OMDb Enrichments                          ║
 echo  ║                                                              ║
 echo  ║   SERVER                                                     ║
 echo  ║   [S] Start Web Server                                       ║
@@ -74,6 +75,7 @@ if /i "%choice%"=="B" goto OMDB_ENRICH
 if /i "%choice%"=="C" goto FULL_ENRICH
 if /i "%choice%"=="K" goto BULK_AI_ENRICH
 if /i "%choice%"=="L" goto FULL_BULK_ENRICH
+if /i "%choice%"=="F" goto RETRY_FAILED
 if /i "%choice%"=="D" goto CLEANUP
 if /i "%choice%"=="M" goto CLEAN_NAMES
 if /i "%choice%"=="S" goto START_SERVER
@@ -292,6 +294,28 @@ if /i "%limit%"=="all" (
 ) else (
     python main.py --enrich --limit %limit%
     python main.py --fetch-omdb --limit %limit%
+)
+echo.
+pause
+goto MENU
+
+:RETRY_FAILED
+cls
+echo.
+echo  ========================================
+echo   RETRY FAILED OMDb ENRICHMENTS
+echo  ========================================
+echo.
+echo  Resets movies that previously failed OMDb enrichment
+echo  (state [4] Failed) back to pending and runs OMDb again.
+echo.
+set /p limit="  Enter limit (default 'all'): "
+if "%limit%"=="" set limit=all
+
+if /i "%limit%"=="all" (
+    python main.py --retry-failed
+) else (
+    python main.py --retry-failed --limit %limit%
 )
 echo.
 pause
