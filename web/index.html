@@ -1408,6 +1408,348 @@
             font-weight: 600;
         }
 
+        /* ===================== LIBRARY STATS PANEL ===================== */
+        .stats-panel {
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            background: color-mix(in srgb, var(--bg-2) 78%, transparent);
+            backdrop-filter: blur(12px) saturate(140%);
+            -webkit-backdrop-filter: blur(12px) saturate(140%);
+            box-shadow: var(--shadow);
+            margin: 0 4px 18px;
+            overflow: hidden;
+        }
+
+        .stats-panel[hidden] {
+            display: none;
+        }
+
+        .stats-panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 16px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .stats-panel-head .sp-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            font-size: .9rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .stats-panel-head .sp-title svg {
+            width: 17px;
+            height: 17px;
+            color: var(--accent-2);
+        }
+
+        .stats-panel-head .sp-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .sp-iconbtn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-2);
+            width: 30px;
+            height: 30px;
+            border-radius: var(--r-sm);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: background var(--t), color var(--t), transform var(--t);
+        }
+
+        .sp-iconbtn svg {
+            width: 15px;
+            height: 15px;
+            transition: transform var(--t);
+        }
+
+        .sp-iconbtn:hover {
+            background: var(--surface-2);
+            color: var(--text);
+        }
+
+        .stats-panel.collapsed .sp-chevron svg {
+            transform: rotate(-90deg);
+        }
+
+        .stats-panel-body {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            padding: 4px 16px 16px;
+        }
+
+        .stats-panel.collapsed .stats-panel-body {
+            display: none;
+        }
+
+        .stat-tile {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 0;
+        }
+
+        .stat-tile .stat-num {
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: -.5px;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+            line-height: 1.1;
+        }
+
+        .stat-tile .stat-lbl {
+            font-size: .72rem;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            font-weight: 700;
+        }
+
+        .stat-tile.span-2 {
+            grid-column: span 2;
+        }
+
+        .stat-genres {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 2px;
+        }
+
+        .stat-genres .tag {
+            cursor: pointer;
+            transition: border-color var(--t), background var(--t);
+            border: 1px solid transparent;
+        }
+
+        .stat-genres .tag:hover {
+            border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+        }
+
+        /* ===================== RATING-FILTER PILLS ===================== */
+        .ratingfilter {
+            display: inline-flex;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 3px;
+            gap: 2px;
+        }
+
+        .ratingfilter button {
+            border: none;
+            background: transparent;
+            color: var(--text-2);
+            padding: 8px 11px;
+            font-size: .8rem;
+            font-weight: 600;
+            border-radius: var(--r-sm);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: background var(--t), color var(--t);
+            white-space: nowrap;
+        }
+
+        .ratingfilter button svg {
+            width: 13px;
+            height: 13px;
+        }
+
+        .ratingfilter button:hover {
+            color: var(--text);
+        }
+
+        .ratingfilter button.active {
+            background: var(--surface-2);
+            color: var(--gold);
+            box-shadow: var(--shadow);
+        }
+
+        /* ===================== DENSITY TOGGLE / COMPACT GRID ===================== */
+        .movie-grid.compact {
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 14px;
+        }
+
+        .movie-grid.compact.no-posters {
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        }
+
+        .movie-grid.compact .card-content {
+            padding: 11px 12px 12px;
+            gap: 7px;
+        }
+
+        .movie-grid.compact .movie-title {
+            font-size: .9rem;
+        }
+
+        .movie-grid.compact .file-name {
+            display: none;
+        }
+
+        /* ===================== KEYBOARD FOCUS RING ON CARDS ===================== */
+        .movie-card.kb-focus {
+            border-color: var(--accent);
+            box-shadow: var(--ring), var(--shadow-md);
+        }
+
+        .movie-grid.list-view .movie-card.kb-focus {
+            box-shadow: var(--ring);
+        }
+
+        /* ===================== KEYBOARD-NAV CHIPS IN MODAL ===================== */
+        .chip-row {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+
+        .meta-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 11px;
+            border-radius: var(--r-pill);
+            font-size: .8rem;
+            font-weight: 600;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-2);
+        }
+
+        .meta-chip.is-genre {
+            color: var(--accent-2);
+            background: color-mix(in srgb, var(--accent) 12%, transparent);
+            border-color: color-mix(in srgb, var(--accent) 26%, transparent);
+        }
+
+        .meta-chip.is-actor {
+            color: var(--text);
+        }
+
+        /* score chips parsed from additional_info / ratings */
+        .score-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 4px;
+        }
+
+        .score-chip {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 88px;
+            padding: 9px 13px;
+            border-radius: var(--r);
+            background: var(--surface);
+            border: 1px solid var(--border);
+        }
+
+        .score-chip .score-val {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--gold);
+            font-variant-numeric: tabular-nums;
+            line-height: 1.1;
+        }
+
+        .score-chip .score-lbl {
+            font-size: .66rem;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            font-weight: 700;
+        }
+
+        /* ===================== MODAL POSTER BACKDROP ===================== */
+        .modal-backdrop-poster {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center top;
+            opacity: .22;
+            filter: blur(22px) saturate(130%);
+            transform: scale(1.15);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .modal-backdrop-poster::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, transparent, var(--bg-2) 86%);
+        }
+
+        .modal-header,
+        .modal-body {
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal-header {
+            background: transparent;
+        }
+
+        /* ===================== SCROLL-TO-TOP BUTTON ===================== */
+        .scrolltop-btn {
+            position: fixed;
+            bottom: 88px;
+            right: 22px;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: var(--on-accent);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-lg);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(12px) scale(.9);
+            transition: opacity var(--t), visibility var(--t), transform var(--t);
+            z-index: 95;
+        }
+
+        .scrolltop-btn svg {
+            width: 21px;
+            height: 21px;
+        }
+
+        .scrolltop-btn.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .scrolltop-btn:hover {
+            box-shadow: 0 12px 30px color-mix(in srgb, var(--accent) 45%, transparent);
+        }
+
         /* ===================== RESPONSIVE ===================== */
         @media (max-width: 768px) {
             .container {
@@ -1430,6 +1772,15 @@
 
             .shortcut-hint {
                 display: none;
+            }
+
+            .scrolltop-btn {
+                bottom: 80px;
+                right: 16px;
+            }
+
+            .stat-tile.span-2 {
+                grid-column: span 1;
             }
         }
 
@@ -1578,6 +1929,42 @@
                     </button>
                 </div>
 
+                <div class="segmented" role="group" aria-label="Grid density">
+                    <button id="densityComfyBtn" onclick="setDensity('comfortable')" title="Comfortable grid"
+                        aria-label="Comfortable density">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="8" height="8" rx="1.5" />
+                            <rect x="13" y="3" width="8" height="8" rx="1.5" />
+                            <rect x="3" y="13" width="8" height="8" rx="1.5" />
+                            <rect x="13" y="13" width="8" height="8" rx="1.5" />
+                        </svg>
+                    </button>
+                    <button id="densityCompactBtn" onclick="setDensity('compact')" title="Compact grid"
+                        aria-label="Compact density">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="5.5" height="5.5" rx="1" />
+                            <rect x="9.5" y="3" width="5.5" height="5.5" rx="1" />
+                            <rect x="16" y="3" width="5.5" height="5.5" rx="1" />
+                            <rect x="3" y="9.5" width="5.5" height="5.5" rx="1" />
+                            <rect x="9.5" y="9.5" width="5.5" height="5.5" rx="1" />
+                            <rect x="16" y="9.5" width="5.5" height="5.5" rx="1" />
+                            <rect x="3" y="16" width="5.5" height="5.5" rx="1" />
+                            <rect x="9.5" y="16" width="5.5" height="5.5" rx="1" />
+                            <rect x="16" y="16" width="5.5" height="5.5" rx="1" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="ratingfilter" id="ratingFilter" role="group" aria-label="Filter by IMDb rating">
+                    <button data-minrating="0" class="active" onclick="setMinRating(0)" title="Any rating">Any</button>
+                    <button data-minrating="7" onclick="setMinRating(7)" title="IMDb 7 and up">
+                        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 18.9 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg>7+</button>
+                    <button data-minrating="8" onclick="setMinRating(8)" title="IMDb 8 and up">
+                        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 18.9 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg>8+</button>
+                </div>
+
                 <select id="genreSelect" aria-label="Filter by genre"
                     onchange="updateFilterFromSelect('genre', this.value)">
                     <option value="">All Genres</option>
@@ -1602,6 +1989,36 @@
                 </button>
             </div>
         </div>
+
+        <section class="stats-panel" id="statsPanel" hidden aria-label="Library statistics">
+            <div class="stats-panel-head" id="statsPanelHead">
+                <span class="sp-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M3 3v18h18" />
+                        <path d="M7 15l3-4 3 3 4-6" />
+                    </svg>
+                    Library stats
+                </span>
+                <span class="sp-controls">
+                    <button class="sp-iconbtn sp-chevron" id="statsCollapseBtn" type="button"
+                        aria-label="Collapse stats" title="Collapse">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m6 9 6 6 6-6" />
+                        </svg>
+                    </button>
+                    <button class="sp-iconbtn" id="statsDismissBtn" type="button" aria-label="Dismiss stats panel"
+                        title="Hide stats">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 6 6 18M6 6l12 12" />
+                        </svg>
+                    </button>
+                </span>
+            </div>
+            <div class="stats-panel-body" id="statsPanelBody"></div>
+        </section>
 
         <div class="status-bar">
             <div class="result-count" id="resultCount"></div>
@@ -1676,9 +2093,18 @@
         </div>
     </div>
 
+    <button class="scrolltop-btn" id="scrollTopBtn" onclick="scrollToTop()" aria-label="Scroll to top"
+        title="Scroll to top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M12 19V5M5 12l7-7 7 7" />
+        </svg>
+    </button>
+
     <div class="shortcut-hint" aria-hidden="true">
         <span><kbd>/</kbd> search</span>
         <span><kbd>r</kbd> random</span>
+        <span><kbd>&larr;&rarr;</kbd> navigate</span>
         <span><kbd>Esc</kbd> close</span>
     </div>
 
@@ -1761,6 +2187,11 @@
         let autoLoadImages = loadPref('autoLoadImages', false);
         let currentTheme = loadPref('theme', 'dark');
         let currentSort = loadPref('sort', 'recent');
+        let currentDensity = loadPref('density', 'comfortable');   // 'comfortable' | 'compact'
+        let minRating = 0;                                          // IMDb min-rating quick filter (0 = any)
+        let statsDismissed = loadPref('statsDismissed', false);
+        let statsCollapsed = loadPref('statsCollapsed', false);
+        const _reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         // Incremental rendering state. We render `pageSize` cards at a time and
         // append the next page on "Load more"/scroll instead of capping at 100.
@@ -1812,6 +2243,7 @@
                 allMovies.forEach((m, i) => { m._order = i; });
 
                 updateStats();
+                renderStatsPanel();
                 populateFilters();
                 filterMovies();
             }
@@ -1881,7 +2313,7 @@
 
         function syncClearFiltersBtn() {
             const query = document.getElementById('searchInput').value;
-            const hasActive = query.length > 0 || Object.values(activeFilters).some(v => v !== null && v !== "");
+            const hasActive = query.length > 0 || minRating > 0 || Object.values(activeFilters).some(v => v !== null && v !== "");
             document.getElementById('clearFiltersBtn').style.display = hasActive ? 'flex' : 'none';
         }
 
@@ -1952,8 +2384,86 @@
             document.getElementById('genreSelect').value = "";
             document.getElementById('yearSelect').value = "";
             document.getElementById('langSelect').value = "";
+            setMinRating(0, true);       // reset pills without an extra render
             document.getElementById('clearFiltersBtn').style.display = 'none';
             filterMovies();
+        }
+
+        // ============================ MIN-RATING QUICK FILTER ============================
+        function setMinRating(value, skipRender) {
+            minRating = Number(value) || 0;
+            document.querySelectorAll('#ratingFilter button').forEach(b => {
+                b.classList.toggle('active', Number(b.dataset.minrating) === minRating);
+            });
+            syncClearFiltersBtn();
+            if (!skipRender) filterMovies();
+        }
+
+        // ============================ GRID DENSITY ============================
+        function setDensity(mode) {
+            currentDensity = mode === 'compact' ? 'compact' : 'comfortable';
+            savePref('density', currentDensity);
+            const container = document.getElementById('movieContainer');
+            container.classList.toggle('compact', currentDensity === 'compact');
+            const comfy = document.getElementById('densityComfyBtn');
+            const compact = document.getElementById('densityCompactBtn');
+            if (comfy) comfy.classList.toggle('active', currentDensity === 'comfortable');
+            if (compact) compact.classList.toggle('active', currentDensity === 'compact');
+            // Keep the keyboard focus ring on the same card after reflow.
+            if (_kbFocusUuid) _applyKbFocusRing();
+        }
+
+        // ============================ SCROLL TO TOP ============================
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: _reduceMotion ? 'auto' : 'smooth' });
+        }
+
+        // ============================ KEYBOARD GRID NAVIGATION ============================
+        // Arrow keys move a focus ring between cards; Enter opens the focused
+        // card's Info modal. We track the active card by uuid so it survives
+        // re-renders (load-more / filter changes).
+        let _kbFocusUuid = null;
+
+        function _allCards() {
+            return [...document.querySelectorAll('#movieContainer .movie-card')];
+        }
+        function _applyKbFocusRing() {
+            const cards = _allCards();
+            cards.forEach(c => c.classList.remove('kb-focus'));
+            if (!_kbFocusUuid) return null;
+            const target = cards.find(c => c.dataset.uuid === _kbFocusUuid);
+            if (target) target.classList.add('kb-focus');
+            return target;
+        }
+        function _columnsInGrid() {
+            // Derive the live column count from computed grid template so arrow
+            // up/down jump a full row regardless of viewport/density.
+            const container = document.getElementById('movieContainer');
+            if (container.classList.contains('list-view')) return 1;
+            const cols = getComputedStyle(container).gridTemplateColumns;
+            const n = cols ? cols.split(' ').filter(Boolean).length : 1;
+            return Math.max(1, n);
+        }
+        function moveKbFocus(deltaIndex) {
+            const cards = _allCards();
+            if (!cards.length) return;
+            let idx = cards.findIndex(c => c.dataset.uuid === _kbFocusUuid);
+            if (idx === -1) {
+                idx = 0;
+            } else {
+                idx = Math.min(cards.length - 1, Math.max(0, idx + deltaIndex));
+            }
+            _kbFocusUuid = cards[idx].dataset.uuid;
+            const target = _applyKbFocusRing();
+            if (target && target.scrollIntoView) {
+                target.scrollIntoView({ block: 'nearest', behavior: _reduceMotion ? 'auto' : 'smooth' });
+            }
+        }
+        function openKbFocusedInfo() {
+            if (!_kbFocusUuid) return false;
+            const movie = allMovies.find(m => m.uuid === _kbFocusUuid);
+            if (movie) { showInfo(movie); return true; }
+            return false;
         }
 
         function toggleAutoImages() {
@@ -2135,6 +2645,10 @@
                 renderedFiltered = movies;
                 renderedCount = 0;
                 if (_io) { _io.disconnect(); _io = null; }
+                // Drop the keyboard focus ring if its card is filtered out.
+                if (_kbFocusUuid && !movies.some(m => m.uuid === _kbFocusUuid)) {
+                    _kbFocusUuid = null;
+                }
                 if (movies.length === 0) { renderEmpty(); return; }
                 container.innerHTML = '';
             }
@@ -2171,6 +2685,9 @@
                 }, { rootMargin: '600px' });
                 _io.observe(sentinel);
             }
+
+            // Re-apply the keyboard focus ring to the (possibly new) DOM.
+            _applyKbFocusRing();
         }
 
         // Render the "Showing X of Y" count + removable filter chips.
@@ -2205,6 +2722,119 @@
             if (activeFilters.genre) addChip('Genre', activeFilters.genre, () => updateFilterFromSelect('genre', '') || (document.getElementById('genreSelect').value = ''));
             if (activeFilters.year) addChip('Year', activeFilters.year, () => updateFilterFromSelect('year', '') || (document.getElementById('yearSelect').value = ''));
             if (activeFilters.language) addChip('Language', activeFilters.language, () => updateFilterFromSelect('language', '') || (document.getElementById('langSelect').value = ''));
+            if (minRating > 0) addChip('IMDb', minRating + '+', () => setMinRating(0));
+        }
+
+        // ============================ LIBRARY STATS PANEL ============================
+        // Derived entirely from allMovies (no backend). Builds tiles with
+        // textContent / escaped genre chips, then reveals the panel.
+        function renderStatsPanel() {
+            const panel = document.getElementById('statsPanel');
+            const body = document.getElementById('statsPanelBody');
+            if (!panel || !body) return;
+
+            if (statsDismissed || allMovies.length === 0) {
+                panel.hidden = true;
+                return;
+            }
+            panel.hidden = false;
+            panel.classList.toggle('collapsed', statsCollapsed);
+
+            const total = allMovies.length;
+            const enriched = allMovies.filter(m => m.imdb_id && m.imdb_id !== 'NA').length;
+            const rated = allMovies.map(m => parseFloat(m.imdb_rating)).filter(r => !isNaN(r));
+            const avg = rated.length ? (rated.reduce((a, b) => a + b, 0) / rated.length) : null;
+            const withYourRating = allMovies.filter(m => {
+                const r = m.user_rating;
+                return r !== undefined && r !== null && r !== '' && r !== 'NA' && parseInt(r, 10) > 0;
+            }).length;
+
+            // Top genres by frequency.
+            const genreCount = {};
+            allMovies.forEach(m => {
+                if (m.genre && m.genre !== 'NA') {
+                    m.genre.split(',').forEach(g => {
+                        const k = g.trim();
+                        if (k) genreCount[k] = (genreCount[k] || 0) + 1;
+                    });
+                }
+            });
+            const topGenres = Object.entries(genreCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+            body.innerHTML = '';
+            const tile = (num, lbl, span2) => {
+                const t = document.createElement('div');
+                t.className = 'stat-tile' + (span2 ? ' span-2' : '');
+                const n = document.createElement('div');
+                n.className = 'stat-num';
+                n.textContent = num;                       // textContent => inert
+                const l = document.createElement('div');
+                l.className = 'stat-lbl';
+                l.textContent = lbl;
+                t.appendChild(n);
+                t.appendChild(l);
+                return t;
+            };
+
+            body.appendChild(tile(String(total), 'Total movies'));
+            body.appendChild(tile(`${enriched}`, 'With IMDb'));
+            body.appendChild(tile(avg !== null ? avg.toFixed(1) : '—', 'Avg IMDb rating'));
+            body.appendChild(tile(String(withYourRating), 'You rated'));
+
+            // Top-genres tile (clickable chips that apply the genre filter).
+            const gTile = document.createElement('div');
+            gTile.className = 'stat-tile span-2';
+            const gLbl = document.createElement('div');
+            gLbl.className = 'stat-lbl';
+            gLbl.textContent = 'Top genres';
+            const gWrap = document.createElement('div');
+            gWrap.className = 'stat-genres';
+            if (topGenres.length) {
+                topGenres.forEach(([name, cnt]) => {
+                    const chip = document.createElement('span');
+                    chip.className = 'tag genre';
+                    chip.textContent = `${name} (${cnt})`;   // textContent => inert
+                    chip.setAttribute('role', 'button');
+                    chip.setAttribute('tabindex', '0');
+                    chip.title = 'Filter by ' + name;
+                    const apply = () => {
+                        const sel = document.getElementById('genreSelect');
+                        // Only set the select if the option exists.
+                        if (sel && [...sel.options].some(o => o.value === name)) sel.value = name;
+                        updateFilterFromSelect('genre', name);
+                        scrollToTop();
+                    };
+                    chip.addEventListener('click', apply);
+                    chip.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); apply(); }
+                    });
+                    gWrap.appendChild(chip);
+                });
+            } else {
+                const none = document.createElement('span');
+                none.className = 'stat-lbl';
+                none.textContent = 'No genre data';
+                gWrap.appendChild(none);
+            }
+            gTile.appendChild(gLbl);
+            gTile.appendChild(gWrap);
+            body.appendChild(gTile);
+        }
+
+        function toggleStatsCollapse() {
+            statsCollapsed = !statsCollapsed;
+            savePref('statsCollapsed', statsCollapsed);
+            const panel = document.getElementById('statsPanel');
+            if (panel) panel.classList.toggle('collapsed', statsCollapsed);
+            const btn = document.getElementById('statsCollapseBtn');
+            if (btn) btn.setAttribute('aria-label', statsCollapsed ? 'Expand stats' : 'Collapse stats');
+        }
+
+        function dismissStats() {
+            statsDismissed = true;
+            savePref('statsDismissed', true);
+            const panel = document.getElementById('statsPanel');
+            if (panel) panel.hidden = true;
         }
 
         // Load a lazy poster given any element inside its container. Resolves
@@ -2309,7 +2939,11 @@
                 // Filter by language
                 const matchesLang = !activeFilters.language || (movie.language && movie.language.includes(activeFilters.language));
 
-                return matchesQuery && matchesGenre && matchesYear && matchesLang;
+                // Min IMDb rating quick filter (0 = any; movies without a
+                // numeric rating are excluded once a threshold is set).
+                const matchesRating = minRating <= 0 || _ratingOf(movie) >= minRating;
+
+                return matchesQuery && matchesGenre && matchesYear && matchesLang && matchesRating;
             });
 
             // Toggle search clear button (the small inline X in the search box).
@@ -2338,6 +2972,25 @@
             const modalPoster = safePosterUrl(movie.poster);
             const posterHtml = modalPoster
                 ? `<img src="${escapeHtml(modalPoster)}" class="modal-poster" alt="${escapeHtml(displayTitle)}">` : '';
+
+            // Softly blurred poster backdrop behind the modal header. Set via
+            // a sanitized URL only (safePosterUrl already rejects non-http(s)).
+            const modalEl = modal.querySelector('.modal');
+            let backdrop = modalEl.querySelector('.modal-backdrop-poster');
+            if (modalPoster) {
+                if (!backdrop) {
+                    backdrop = document.createElement('div');
+                    backdrop.className = 'modal-backdrop-poster';
+                    backdrop.setAttribute('aria-hidden', 'true');
+                    modalEl.insertBefore(backdrop, modalEl.firstChild);
+                }
+                // modalPoster is already validated; CSS url() context, no markup.
+                backdrop.style.backgroundImage = `url("${encodeURI(modalPoster)}")`;
+                backdrop.style.display = '';
+            } else if (backdrop) {
+                backdrop.style.backgroundImage = '';
+                backdrop.style.display = 'none';
+            }
 
             // "Open on IMDb" link when imdb_id exists.
             let imdbLinkHtml = '';
@@ -2369,9 +3022,10 @@
                 </div>
             </div>`;
 
+            // Actors now render as chips above, so they're dropped here to
+            // avoid duplication; the rest stay as labelled detail items.
             const infoItems = [
                 { label: 'Director', value: movie.director },
-                { label: 'Actors', value: movie.actors },
                 { label: 'Language', value: movie.language },
                 { label: 'Country', value: movie.country },
                 { label: 'IMDb ID', value: movie.imdb_id },
@@ -2379,21 +3033,58 @@
                 { label: 'Awards', value: movie.awards }
             ].filter(item => item.value && item.value !== 'NA');
 
-            // Parse Additional Info Text
+            // Parse Additional Info Text. Lines come in two shapes:
+            //   **Metascore**: 80          (bold markdown label)
+            //   Rotten Tomatoes: 91%       (plain "Source: Value")
+            // Short numeric/score-like values become prominent score chips;
+            // everything else stays as labelled detail items. All escaped.
             let additionalInfoHtml = '';
+            let scoreChipsHtml = '';
             if (movie.additional_info && movie.additional_info !== 'NA') {
                 const lines = movie.additional_info.split('\n');
-                const additionalItems = lines.map(line => {
-                    const match = line.match(/\*\*(.*?)\*\*:(.*)/);
+                const parsed = lines.map(line => {
+                    let match = line.match(/\*\*(.*?)\*\*\s*:(.*)/);
+                    if (!match) match = line.match(/^\s*([A-Za-z][\w .'/&-]{1,40}?)\s*:\s*(.+)$/);
                     if (match) {
-                        return { label: match[1], value: match[2].trim() };
+                        const label = match[1].trim();
+                        const value = match[2].trim();
+                        if (label && value) return { label, value };
                     }
                     return null;
-                }).filter(item => item !== null);
+                }).filter(Boolean);
 
-                if (additionalItems.length > 0) {
-                    additionalInfoHtml = `<div class="info-item" style="grid-column: 1 / -1; margin-top: 10px;"><div class="info-label" style="border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 12px;">Additional Details</div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px;">${additionalItems.map(item => `<div><div class="info-label">${escapeHtml(item.label)}</div><div class="info-value">${escapeHtml(item.value)}</div></div>`).join('')}</div></div>`;
+                // A value is "score-like" if it's short and looks like a rating
+                // (e.g. 80, 8.1/10, 91%, 80/100). These become score chips.
+                const isScore = v => /^[0-9][0-9.]*\s*(%|\/\s*\d+)?$/.test(v) && v.length <= 8;
+                const scoreItems = parsed.filter(p => isScore(p.value));
+                const detailItems = parsed.filter(p => !isScore(p.value));
+
+                if (scoreItems.length > 0) {
+                    scoreChipsHtml = `<div class="score-row">${scoreItems.map(p =>
+                        `<div class="score-chip"><span class="score-val">${escapeHtml(p.value)}</span><span class="score-lbl">${escapeHtml(p.label)}</span></div>`
+                    ).join('')}</div>`;
                 }
+
+                if (detailItems.length > 0) {
+                    additionalInfoHtml = `<div class="info-item" style="grid-column: 1 / -1; margin-top: 10px;"><div class="info-label" style="border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 12px;">Additional Details</div><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px;">${detailItems.map(item => `<div><div class="info-label">${escapeHtml(item.label)}</div><div class="info-value">${escapeHtml(item.value)}</div></div>`).join('')}</div></div>`;
+                }
+            }
+
+            // Genre + actor chips (escaped). Split comma lists into pills.
+            const chipFrom = (str, cls, max) => {
+                if (!str || str === 'NA') return '';
+                const items = str.split(',').map(s => s.trim()).filter(Boolean).slice(0, max);
+                return items.map(s => `<span class="meta-chip ${cls}">${escapeHtml(s)}</span>`).join('');
+            };
+            const genreChips = chipFrom(movie.genre, 'is-genre', 6);
+            const actorChips = chipFrom(movie.actors, 'is-actor', 8);
+            let chipsBlockHtml = '';
+            if (scoreChipsHtml || genreChips || actorChips) {
+                chipsBlockHtml = `<div style="margin-bottom:16px;display:flex;flex-direction:column;gap:10px;">
+                    ${scoreChipsHtml}
+                    ${genreChips ? `<div class="chip-row">${genreChips}</div>` : ''}
+                    ${actorChips ? `<div class="chip-row">${actorChips}</div>` : ''}
+                </div>`;
             }
 
             const plotHtml = movie.plot && movie.plot !== 'NA'
@@ -2424,6 +3115,7 @@
             </div>`;
 
             body.innerHTML = `${modalTopHtml}
+            ${chipsBlockHtml}
             ${infoItems.length || additionalInfoHtml ? `<div class="info-grid">
                 ${infoItems.map(item => `
                     <div class="info-item">
@@ -2512,6 +3204,8 @@
                     showToast(result.message || 'Saved your rating & tags', 'success');
                     // Re-render just the affected card in place if present.
                     rerenderCard(movie.uuid);
+                    // The "You rated" stat may have changed.
+                    renderStatsPanel();
                 } else {
                     showToast('Error: ' + (result.message || 'Could not save'), 'error');
                 }
@@ -2542,6 +3236,8 @@
             if (!modal.classList.contains('active')) return;
             modal.classList.remove('active');
             document.body.style.overflow = '';
+            const backdrop = modal.querySelector('.modal-backdrop-poster');
+            if (backdrop) { backdrop.style.backgroundImage = ''; backdrop.style.display = 'none'; }
             restoreModalFocus();
         }
 
@@ -2578,6 +3274,18 @@
                 if (s) { s.focus(); s.select(); }
             } else if ((e.key === 'r' || e.key === 'R') && !typing && !anyModal && !e.ctrlKey && !e.metaKey) {
                 surpriseMe();
+            } else if (!typing && !anyModal && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                // Arrow-key grid navigation + Enter to open the focused card.
+                const cols = _columnsInGrid();
+                switch (e.key) {
+                    case 'ArrowRight': e.preventDefault(); moveKbFocus(1); break;
+                    case 'ArrowLeft': e.preventDefault(); moveKbFocus(-1); break;
+                    case 'ArrowDown': e.preventDefault(); moveKbFocus(cols); break;
+                    case 'ArrowUp': e.preventDefault(); moveKbFocus(-cols); break;
+                    case 'Enter':
+                        if (_kbFocusUuid) { e.preventDefault(); openKbFocusedInfo(); }
+                        break;
+                }
             }
         });
 
@@ -2684,7 +3392,7 @@
             }
 
             // Show loading
-            resultDiv.innerHTML = '<div class="search-result" style="color: var(--text-secondary);">🔍 Searching OMDb...</div>';
+            resultDiv.innerHTML = '<div class="search-result" style="color: var(--text-2);">🔍 Searching OMDb...</div>';
 
             try {
                 const response = await fetch('/api/manual-enrich', {
@@ -2770,8 +3478,34 @@
             else { imgBtn.classList.remove('active'); if (imgSpan) imgSpan.textContent = 'Auto Images: OFF'; }
 
             toggleView(isListView ? 'list' : 'grid');
+            setDensity(currentDensity);
             setSort(currentSort);
         }
+
+        // ---- Stats panel controls ----
+        (function wireStatsPanel() {
+            const collapseBtn = document.getElementById('statsCollapseBtn');
+            const dismissBtn = document.getElementById('statsDismissBtn');
+            const head = document.getElementById('statsPanelHead');
+            if (collapseBtn) collapseBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleStatsCollapse(); });
+            if (dismissBtn) dismissBtn.addEventListener('click', (e) => { e.stopPropagation(); dismissStats(); });
+            // Clicking the header bar (but not its buttons) also collapses.
+            if (head) head.addEventListener('click', (e) => {
+                if (e.target.closest('.sp-iconbtn')) return;
+                toggleStatsCollapse();
+            });
+        })();
+
+        // ---- Scroll-to-top button visibility ----
+        (function wireScrollTop() {
+            const btn = document.getElementById('scrollTopBtn');
+            if (!btn) return;
+            const onScroll = () => {
+                btn.classList.toggle('show', window.scrollY > 600);
+            };
+            window.addEventListener('scroll', onScroll, { passive: true });
+            onScroll();
+        })();
 
         // Initial load
         applyViewPreferences();

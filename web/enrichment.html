@@ -363,6 +363,60 @@
             border-color: color-mix(in srgb, var(--warn) 30%, transparent);
         }
 
+        .status-badge.failed {
+            color: var(--danger);
+            background: color-mix(in srgb, var(--danger) 14%, transparent);
+            border-color: color-mix(in srgb, var(--danger) 32%, transparent);
+        }
+
+        /* Sort control + visible-count chip in the toolbar */
+        .sort-control {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sort-control label {
+            font-size: .72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--text-3);
+        }
+
+        .sort-control select {
+            height: 40px;
+            padding: 0 32px 0 12px;
+            border-radius: var(--r-pill);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-2);
+            font: inherit;
+            font-size: .88rem;
+            font-weight: 600;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c7287' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 11px center;
+            background-size: 14px;
+            transition: border-color var(--t), color var(--t);
+        }
+
+        .sort-control select:hover {
+            color: var(--text);
+            border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+        }
+
+        .visible-count {
+            font-size: .82rem;
+            font-weight: 500;
+            color: var(--text-3);
+            flex-basis: 100%;
+        }
+
+        .visible-count strong { color: var(--text-2); font-weight: 700; }
+
         /* Inputs grid */
         .inputs {
             display: grid;
@@ -403,6 +457,52 @@
             box-shadow: var(--ring);
         }
 
+        /* Invalid inline validation state */
+        .inputs input.invalid {
+            border-color: var(--danger);
+            background: color-mix(in srgb, var(--danger) 8%, var(--bg-2));
+        }
+
+        .inputs input.invalid:focus-visible {
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 40%, transparent);
+        }
+
+        .field .hint {
+            font-size: .68rem;
+            font-weight: 500;
+            color: var(--danger);
+            min-height: 0;
+            line-height: 1.2;
+        }
+
+        /* Quick-action icon buttons (Play / Open folder) */
+        .quick-actions {
+            display: flex;
+            gap: 7px;
+        }
+
+        .quick-btn {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            display: grid;
+            place-items: center;
+            border-radius: var(--r-sm);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text-2);
+        }
+
+        .quick-btn:hover {
+            color: var(--text);
+            border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+            background: var(--surface);
+        }
+
+        .quick-btn svg { width: 16px; height: 16px; }
+        .quick-btn:disabled { opacity: .6; cursor: not-allowed; }
+        .quick-btn.busy, button.busy { cursor: progress; }
+
         /* Actions */
         .actions {
             display: flex;
@@ -424,7 +524,7 @@
         }
 
         button:active { transform: translateY(1px); }
-        button:disabled { opacity: .6; cursor: progress; }
+        button:disabled { opacity: .6; cursor: not-allowed; }
 
         .btn-primary {
             display: inline-flex;
@@ -620,6 +720,16 @@
         .meta-item .v { font-size: .94rem; color: var(--text); line-height: 1.5; }
         .meta-plot { grid-column: 1 / -1; }
 
+        .modal-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .modal-actions a.link-btn,
+        .modal-actions button { height: 40px; }
+
         /* ===== Toasts ===== */
         .toast-container {
             position: fixed;
@@ -715,12 +825,27 @@
                 <button class="tab-btn" role="tab" aria-selected="false" onclick="switchTab('enriched')">
                     Enriched <span class="tab-count" id="countEnriched">0</span>
                 </button>
+                <button class="tab-btn" role="tab" aria-selected="false" onclick="switchTab('failed')">
+                    Failed <span class="tab-count" id="countFailed">0</span>
+                </button>
+            </div>
+
+            <div class="sort-control">
+                <label for="sortSelect">Sort</label>
+                <select id="sortSelect" aria-label="Sort movies" onchange="onSortChange()">
+                    <option value="name-asc">Name A–Z</option>
+                    <option value="name-desc">Name Z–A</option>
+                    <option value="year-desc">Year (newest)</option>
+                    <option value="year-asc">Year (oldest)</option>
+                </select>
             </div>
 
             <div class="search">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-                <input type="search" id="searchInput" placeholder="Search by filename or title…" aria-label="Search movies" oninput="render()" autocomplete="off">
+                <input type="search" id="searchInput" placeholder="Search by filename or title… (press / to focus)" aria-label="Search movies" oninput="render()" autocomplete="off">
             </div>
+
+            <div class="visible-count" id="visibleCount" aria-live="polite"></div>
         </div>
 
         <div id="movieList" class="movie-list" role="region" aria-live="polite"></div>
@@ -742,6 +867,7 @@
     <script>
         let allMovies = [];
         let currentTab = 'pending';
+        let currentSort = 'name-asc';
 
         // UI preferences persist across reloads via localStorage.
         function loadPref(key, def) {
@@ -826,13 +952,28 @@
             return m.title !== 'NA' && m.title != null;
         }
 
+        // is_active === 4 marks an enrichment that failed and needs attention.
+        // Compare loosely so a numeric or string "4" both register.
+        function isFailedMovie(m) {
+            return !isEnrichedMovie(m) && String(m.is_active) === '4';
+        }
+
+        // Single source of truth for which bucket a movie belongs to.
+        function movieState(m) {
+            if (isEnrichedMovie(m)) return 'enriched';
+            if (isFailedMovie(m)) return 'failed';
+            return 'pending';
+        }
+
         function updateCounts() {
-            let pending = 0, enriched = 0;
-            for (const m of allMovies) { isEnrichedMovie(m) ? enriched++ : pending++; }
+            const c = { pending: 0, enriched: 0, failed: 0 };
+            for (const m of allMovies) c[movieState(m)]++;
             const cp = document.getElementById('countPending');
             const ce = document.getElementById('countEnriched');
-            if (cp) cp.textContent = pending;
-            if (ce) ce.textContent = enriched;
+            const cf = document.getElementById('countFailed');
+            if (cp) cp.textContent = c.pending;
+            if (ce) ce.textContent = c.enriched;
+            if (cf) cf.textContent = c.failed;
         }
 
         function showSkeleton() {
@@ -854,6 +995,15 @@
                     </div>`;
             }
             container.innerHTML = html;
+        }
+
+        // Restore the persisted sort preference into state + the <select>.
+        function initSortPref() {
+            currentSort = loadPref('sort', 'name-asc');
+            const valid = ['name-asc', 'name-desc', 'year-desc', 'year-asc'];
+            if (!valid.includes(currentSort)) currentSort = 'name-asc';
+            const sel = document.getElementById('sortSelect');
+            if (sel) sel.value = currentSort;
         }
 
         async function init() {
@@ -885,6 +1035,45 @@
             render();
         }
 
+        function onSortChange() {
+            const sel = document.getElementById('sortSelect');
+            currentSort = sel ? sel.value : 'name-asc';
+            savePref('sort', currentSort);
+            render();
+        }
+
+        // Best available display title / year for sorting & searching.
+        function bestTitle(m) {
+            const t = (m.ai_title && m.ai_title !== 'NA') ? m.ai_title
+                : (m.title && m.title !== 'NA') ? m.title
+                : (m.extracted_name && m.extracted_name !== 'NA') ? m.extracted_name
+                : (m.file_name || '');
+            return String(t).toLowerCase();
+        }
+        function bestYear(m) {
+            const y = (m.ai_year && m.ai_year !== 'NA') ? m.ai_year
+                : (m.year && m.year !== 'NA') ? m.year
+                : (m.extracted_year && m.extracted_year !== 'NA') ? m.extracted_year
+                : '';
+            const n = parseInt(y, 10);
+            return Number.isFinite(n) ? n : null;
+        }
+
+        function sortMovies(list) {
+            const arr = list.slice();
+            arr.sort((a, b) => {
+                if (currentSort === 'name-asc') return bestTitle(a).localeCompare(bestTitle(b));
+                if (currentSort === 'name-desc') return bestTitle(b).localeCompare(bestTitle(a));
+                // Year sorts: missing years always sink to the bottom.
+                const ya = bestYear(a), yb = bestYear(b);
+                if (ya === null && yb === null) return bestTitle(a).localeCompare(bestTitle(b));
+                if (ya === null) return 1;
+                if (yb === null) return -1;
+                return currentSort === 'year-asc' ? ya - yb : yb - ya;
+            });
+            return arr;
+        }
+
         function render() {
             const container = document.getElementById('movieList');
             container.innerHTML = '';
@@ -892,28 +1081,32 @@
             const searchEl = document.getElementById('searchInput');
             const q = (searchEl ? searchEl.value : '').trim().toLowerCase();
 
-            const filtered = allMovies.filter(movie => {
-                const isEnriched = isEnrichedMovie(movie);
-                if (currentTab === 'enriched' ? !isEnriched : isEnriched) return false;
+            const filtered = sortMovies(allMovies.filter(movie => {
+                if (movieState(movie) !== currentTab) return false;
                 if (!q) return true;
                 // Client-side filter across filename + best-known title fields.
-                const hay = [movie.file_name, movie.title, movie.ai_title, movie.extracted_name]
+                const hay = [movie.file_name, movie.title, movie.ai_title, movie.extracted_name, movie.user_tags]
                     .filter(v => v && v !== 'NA').join(' ').toLowerCase();
                 return hay.includes(q);
-            });
+            }));
+
+            updateVisibleCount(filtered.length, q);
 
             if (filtered.length === 0) {
                 const searching = !!q;
+                const emptyCopy = {
+                    enriched: ['No enriched movies yet', 'Enriched movies will appear here once saved.'],
+                    failed: ['No failed enrichments', 'Nothing here — no movie is in a failed state.'],
+                    pending: ['Nothing pending', 'All caught up — every movie has metadata.']
+                }[currentTab] || ['Nothing here', ''];
                 container.innerHTML = `<div class="state" role="status">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${
                         searching
                         ? '<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/>'
                         : '<path d="M2 3h6l2 4h12v11a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/>'
                     }</svg>
-                    <h3>${searching ? 'No matches found' : (currentTab === 'enriched' ? 'No enriched movies yet' : 'Nothing pending')}</h3>
-                    <p>${searching
-                        ? 'Try a different filename or title.'
-                        : (currentTab === 'enriched' ? 'Enriched movies will appear here once saved.' : 'All caught up — every movie has metadata.')}</p>
+                    <h3>${searching ? 'No matches found' : emptyCopy[0]}</h3>
+                    <p>${searching ? 'Try a different filename or title.' : emptyCopy[1]}</p>
                 </div>`;
                 return;
             }
@@ -922,7 +1115,8 @@
                 const row = document.createElement('div');
                 row.className = 'movie-row';
 
-                const enriched = isEnrichedMovie(movie);
+                const state = movieState(movie);
+                const enriched = state === 'enriched';
                 const displayTitle = movie.ai_title !== 'NA' ? movie.ai_title : movie.extracted_name;
                 const displayYear = movie.ai_year !== 'NA' ? movie.ai_year : movie.extracted_year;
 
@@ -933,9 +1127,11 @@
                 const tagsVal = escapeHtml(movie.user_tags !== 'NA' && movie.user_tags ? movie.user_tags : '');
                 const uuid = escapeHtml(movie.uuid);
 
-                const badge = enriched
-                    ? '<span class="status-badge enriched">Enriched</span>'
-                    : '<span class="status-badge pending">Pending</span>';
+                const badge = {
+                    enriched: '<span class="status-badge enriched">Enriched</span>',
+                    failed: '<span class="status-badge failed">Failed</span>',
+                    pending: '<span class="status-badge pending">Pending</span>'
+                }[state];
 
                 row.innerHTML = `
                     <div class="movie-info">
@@ -944,39 +1140,50 @@
                             <span>${escapeHtml(movie.file_name)}</span>
                         </div>
                         <div class="movie-title">${escapeHtml(displayTitle)} (${escapeHtml(displayYear)}) ${badge}</div>
+                        <div class="quick-actions">
+                            <button class="quick-btn" type="button" onclick="playMovie('${uuid}', event)" aria-label="Play this file" title="Play">
+                                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M5 3l14 9-14 9z"/></svg>
+                            </button>
+                            <button class="quick-btn" type="button" onclick="openFolder('${uuid}', event)" aria-label="Open containing folder" title="Open folder">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="inputs">
                         <div class="field">
                             <label for="title-${uuid}">Title</label>
-                            <input type="text" placeholder="Movie title" value="${titleVal}" id="title-${uuid}">
+                            <input type="text" placeholder="Movie title" value="${titleVal}" id="title-${uuid}" data-orig="${titleVal}" oninput="onRowInput('${uuid}')" onkeydown="onRowKey('${uuid}', event)">
                         </div>
                         <div class="field">
                             <label for="year-${uuid}">Year</label>
-                            <input type="text" placeholder="YYYY" value="${yearVal}" id="year-${uuid}">
+                            <input type="text" inputmode="numeric" placeholder="YYYY" value="${yearVal}" id="year-${uuid}" data-orig="${yearVal}" oninput="onRowInput('${uuid}')" onkeydown="onRowKey('${uuid}', event)">
+                            <span class="hint" id="hint-year-${uuid}"></span>
                         </div>
                         <div class="field">
                             <label for="imdb-${uuid}">IMDb ID</label>
-                            <input type="text" placeholder="tt1234567" value="${imdbVal}" id="imdb-${uuid}">
+                            <input type="text" placeholder="tt1234567" value="${imdbVal}" id="imdb-${uuid}" data-orig="${imdbVal}" oninput="onRowInput('${uuid}')" onkeydown="onRowKey('${uuid}', event)">
+                            <span class="hint" id="hint-imdb-${uuid}"></span>
                         </div>
                         <div class="field">
                             <label for="rate-${uuid}">My Rating (0–10)</label>
-                            <input type="number" placeholder="–" min="0" max="10" step="0.1" value="${rateVal}" id="rate-${uuid}" title="Your personal rating, 0 to 10">
+                            <input type="number" placeholder="–" min="0" max="10" step="0.1" value="${rateVal}" id="rate-${uuid}" data-orig="${rateVal}" title="Your personal rating, 0 to 10" oninput="onRowInput('${uuid}')" onkeydown="onRowKey('${uuid}', event)">
+                            <span class="hint" id="hint-rate-${uuid}"></span>
                         </div>
                         <div class="field span-2">
                             <label for="tags-${uuid}">Tags</label>
-                            <input type="text" placeholder="comma, separated, tags" value="${tagsVal}" id="tags-${uuid}" title="Comma-separated tags">
+                            <input type="text" placeholder="comma, separated, tags" value="${tagsVal}" id="tags-${uuid}" data-orig="${tagsVal}" title="Comma-separated tags" oninput="onRowInput('${uuid}')" onkeydown="onRowKey('${uuid}', event)">
                         </div>
                     </div>
 
                     <div class="actions">
-                        <button class="btn-primary" onclick="updateMovie('${uuid}', event)">
+                        <button class="btn-primary" id="save-${uuid}" onclick="updateMovie('${uuid}', event)">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${
                                 enriched
                                 ? '<path d="M21.5 2v6h-6M2.5 22v-6h6"/><path d="M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>'
                                 : '<path d="M5 3l14 9-14 9z"/>'
                             }</svg>
-                            <span>${enriched ? 'Update' : 'Enrich'}</span>
+                            <span>${enriched ? 'Update' : (state === 'failed' ? 'Retry' : 'Enrich')}</span>
                         </button>
                         ${enriched ? `<button class="btn-ghost" onclick="showInfo('${uuid}')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
@@ -985,15 +1192,113 @@
                     </div>
                 `;
                 container.appendChild(row);
+
+                // Validate + set the Save button's enabled/disabled baseline.
+                validateRow(uuid);
             });
         }
 
+        function updateVisibleCount(n, q) {
+            const el = document.getElementById('visibleCount');
+            if (!el) return;
+            const noun = n === 1 ? 'movie' : 'movies';
+            el.innerHTML = `Showing <strong>${n}</strong> ${noun}${q ? ' matching “' + escapeHtml(q) + '”' : ''} in <strong>${escapeHtml(currentTab)}</strong>.`;
+        }
+
+        // ----- Per-row inline validation -----
+        // Returns true when every field is valid. Also toggles the .invalid
+        // class + hint text and the Save button's disabled state (disabled
+        // when nothing changed OR a field is invalid).
+        function validateRow(uuid) {
+            const titleEl = document.getElementById(`title-${uuid}`);
+            const yearEl = document.getElementById(`year-${uuid}`);
+            const imdbEl = document.getElementById(`imdb-${uuid}`);
+            const rateEl = document.getElementById(`rate-${uuid}`);
+            const tagsEl = document.getElementById(`tags-${uuid}`);
+            const saveBtn = document.getElementById(`save-${uuid}`);
+            if (!titleEl) return false;
+
+            let ok = true;
+
+            const year = yearEl.value.trim();
+            const yearValid = year === '' || /^\d{4}$/.test(year);
+            setHint(yearEl, `hint-year-${uuid}`, yearValid, 'Use 4 digits (YYYY)');
+            ok = ok && yearValid;
+
+            const imdb = imdbEl.value.trim();
+            const imdbValid = imdb === '' || /^tt\d+$/.test(imdb);
+            setHint(imdbEl, `hint-imdb-${uuid}`, imdbValid, 'Format: tt1234567');
+            ok = ok && imdbValid;
+
+            const rate = rateEl.value.trim();
+            const rateNum = parseFloat(rate);
+            const rateValid = rate === '' || (Number.isFinite(rateNum) && rateNum >= 0 && rateNum <= 10);
+            setHint(rateEl, `hint-rate-${uuid}`, rateValid, 'Rating must be 0–10');
+            ok = ok && rateValid;
+
+            // Dirty check: compare trimmed current values to the originals.
+            const dirty =
+                titleEl.value.trim() !== (titleEl.dataset.orig || '') ||
+                year !== (yearEl.dataset.orig || '').trim() ||
+                imdb !== (imdbEl.dataset.orig || '').trim() ||
+                rate !== (rateEl.dataset.orig || '').trim() ||
+                tagsEl.value.trim() !== (tagsEl.dataset.orig || '').trim();
+
+            if (saveBtn) {
+                saveBtn.disabled = !dirty || !ok;
+                saveBtn.title = !dirty ? 'No changes to save'
+                    : !ok ? 'Fix the highlighted fields first' : '';
+            }
+            return ok && dirty;
+        }
+
+        function setHint(input, hintId, valid, msg) {
+            input.classList.toggle('invalid', !valid);
+            input.setAttribute('aria-invalid', valid ? 'false' : 'true');
+            const hint = document.getElementById(hintId);
+            if (hint) hint.textContent = valid ? '' : msg;
+        }
+
+        function onRowInput(uuid) { validateRow(uuid); }
+
+        // Enter inside any row input triggers that row's Save (if enabled).
+        function onRowKey(uuid, e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const saveBtn = document.getElementById(`save-${uuid}`);
+                if (saveBtn && !saveBtn.disabled) saveBtn.click();
+            }
+        }
+
+        // Shared POST helper: checks res.ok and surfaces server-reported
+        // {status:'error'} payloads as thrown errors.
+        async function postJson(url, body) {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) throw new Error(res.statusText || ('HTTP ' + res.status));
+            const data = await res.json();
+            if (data.status === 'error') throw new Error(data.message);
+            return data;
+        }
+
         async function updateMovie(uuid, e) {
-            const title = document.getElementById(`title-${uuid}`).value;
-            const year = document.getElementById(`year-${uuid}`).value;
-            const imdbId = document.getElementById(`imdb-${uuid}`).value;
-            const rating = document.getElementById(`rate-${uuid}`).value;
-            const tags = document.getElementById(`tags-${uuid}`).value;
+            // Trim before sending so stray whitespace never reaches the API.
+            const title = document.getElementById(`title-${uuid}`).value.trim();
+            const year = document.getElementById(`year-${uuid}`).value.trim();
+            const imdbId = document.getElementById(`imdb-${uuid}`).value.trim();
+            const rating = document.getElementById(`rate-${uuid}`).value.trim();
+            const tags = document.getElementById(`tags-${uuid}`).value.trim();
+
+            // Block submission if anything is invalid (mirrors validateRow).
+            if (year && !/^\d{4}$/.test(year)) { showToast('Year must be 4 digits', 'error'); return; }
+            if (imdbId && !/^tt\d+$/.test(imdbId)) { showToast('IMDb ID must look like tt1234567', 'error'); return; }
+            if (rating) {
+                const r = parseFloat(rating);
+                if (!Number.isFinite(r) || r < 0 || r > 10) { showToast('Rating must be between 0 and 10', 'error'); return; }
+            }
 
             // Show loading state. Use currentTarget so we always get the
             // button element, even if a child node was the click target.
@@ -1001,18 +1306,6 @@
             const originalText = btn.textContent;
             btn.textContent = 'Saving…';
             btn.disabled = true;
-
-            const postJson = async (url, body) => {
-                const res = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-                if (!res.ok) throw new Error(res.statusText || ('HTTP ' + res.status));
-                const data = await res.json();
-                if (data.status === 'error') throw new Error(data.message);
-                return data;
-            };
 
             try {
                 // 1. Update Metadata (Rating/Tags)
@@ -1032,9 +1325,39 @@
             } catch (error) {
                 console.error('Update failed:', error);
                 showToast('Update failed: ' + error.message, 'error');
-            } finally {
                 btn.textContent = originalText;
                 btn.disabled = false;
+            }
+        }
+
+        // ----- Quick actions: Play / Open folder (POST, viewer contract) -----
+        async function playMovie(uuid, e) {
+            const btn = e ? e.currentTarget : null;
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+            try {
+                const data = await postJson('/play', { uuid });
+                showToast(data.message || 'Playing', 'success');
+            } catch (error) {
+                console.error('Play error:', error);
+                showToast('Failed to play movie: ' + error.message, 'error');
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
+            }
+        }
+
+        async function openFolder(uuid, e) {
+            const btn = e ? e.currentTarget : null;
+            const originalHtml = btn ? btn.innerHTML : '';
+            if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+            try {
+                const data = await postJson('/api/open-folder', { uuid });
+                showToast(data.message || 'Opened folder', 'success');
+            } catch (error) {
+                console.error('Folder open error:', error);
+                showToast('Failed to open folder: ' + error.message, 'error');
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
             }
         }
 
@@ -1059,6 +1382,18 @@
                 ? `<div class="imdb-pill"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 17.3 5.8 20.9l1.6-6.8L2.2 8.9l6.9-.6z"/></svg>${escapeHtml(movie.imdb_rating)} IMDb</div>`
                 : '';
 
+            // Build an IMDb deep-link only from a validated tt-id, so the
+            // href can never carry an injected scheme/payload.
+            const safeImdbId = (movie.imdb_id && /^tt\d+$/.test(movie.imdb_id)) ? movie.imdb_id : null;
+            const imdbLink = safeImdbId
+                ? `<a class="link-btn" href="https://www.imdb.com/title/${escapeHtml(safeImdbId)}/" target="_blank" rel="noopener noreferrer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14L21 3"/></svg>
+                        <span>Open on IMDb</span>
+                   </a>`
+                : '';
+
+            const uuidAttr = escapeHtml(movie.uuid);
+
             content.innerHTML = `
                 <div class="info-grid">
                     ${posterHtml}
@@ -1072,6 +1407,17 @@
                             ${metaRow('Actors', movie.actors)}
                             ${metaRow('IMDb ID', movie.imdb_id)}
                             <div class="meta-item meta-plot"><div class="k">Plot</div><div class="v">${(movie.plot && movie.plot !== 'NA') ? escapeHtml(movie.plot) : '—'}</div></div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn-primary" type="button" onclick="playMovie('${uuidAttr}', event)">
+                                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true"><path d="M5 3l14 9-14 9z"/></svg>
+                                <span>Play</span>
+                            </button>
+                            <button class="link-btn" type="button" onclick="openFolder('${uuidAttr}', event)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                                <span>Open folder</span>
+                            </button>
+                            ${imdbLink}
                         </div>
                     </div>
                 </div>
@@ -1091,13 +1437,42 @@
             _modalReturnFocus = null;
         }
 
-        // Close the info modal on Escape.
+        // Keep Tab focus inside the info modal while it's open (focus trap).
+        function trapModalTab(e) {
+            const modal = document.getElementById('infoModal');
+            if (modal.style.display !== 'flex') return;
+            const f = [...modal.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )];
+            if (!f.length) return;
+            const first = f[0], last = f[f.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+
+        // Global keyboard shortcuts: Esc closes the modal; Tab is trapped in it;
+        // "/" focuses search.
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && document.getElementById('infoModal').style.display === 'flex') {
                 closeModal();
+                return;
+            }
+            if (e.key === 'Tab') { trapModalTab(e); }
+            // "/" focuses the search box, unless the user is already typing
+            // in a field or the modal is open.
+            if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                const ae = document.activeElement;
+                const typing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT' || ae.isContentEditable);
+                const modalOpen = document.getElementById('infoModal').style.display === 'flex';
+                if (!typing && !modalOpen) {
+                    e.preventDefault();
+                    const s = document.getElementById('searchInput');
+                    if (s) { s.focus(); s.select(); }
+                }
             }
         });
 
+        initSortPref();
         init();
     </script>
 </body>
