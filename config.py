@@ -172,7 +172,7 @@ BATCH_SIZE = 50
 # Options: "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-3-flash-preview",
 #          "gemini-3.5-flash" (latest), or "gemini-flash-latest" (rolling alias)
 # Type: str
-AI_MODEL = "gemini-3.5-flash"
+AI_MODEL = "gemini-2.5-flash"
 
 # AI_SEARCH_MODEL: Gemini model used for web search (Step 1 of pipeline).
 # This model uses Google Search grounding to find movie details.
