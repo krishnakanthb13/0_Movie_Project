@@ -348,8 +348,11 @@ Examples:
                         help="Enrich movies with Gemini AI")
     parser.add_argument("--fetch-omdb", action="store_true", 
                         help="Fetch OMDb metadata")
-    parser.add_argument("--full-enrich", action="store_true", 
+    parser.add_argument("--full-enrich", action="store_true",
                         help="Run full enrichment (AI + OMDb)")
+    parser.add_argument("--retry-failed", action="store_true",
+                        help="Retry movies that failed OMDb enrichment (state 4): "
+                             "reset them to pending and run OMDb again")
     parser.add_argument("--bulk", action="store_true",
                         help="Use text-based bulk enrichment (faster, uses configured AI model)")
     parser.add_argument("--model", choices=["2.5", "3.5"],
@@ -436,6 +439,12 @@ Examples:
     if args.fetch_omdb:
         count = enrich_with_omdb(args.limit)
         logger.info(f"OMDb enrichment complete: {count} movies processed")
+
+    # Retry failed OMDb enrichments (state 4 -> 2 -> re-run OMDb)
+    if args.retry_failed:
+        from enricher import retry_failed_omdb
+        count = retry_failed_omdb(args.limit)
+        logger.info(f"Retry complete: {count} previously-failed movies processed")
     
     # Full enrichment pipeline
     if args.full_enrich:

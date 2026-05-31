@@ -595,6 +595,29 @@ def get_movies_without_omdb() -> List[Dict]:
         conn.close()
 
 
+def reset_failed_to_pending_omdb() -> int:
+    """
+    Reset failed movies (is_active = 4) back to pending OMDb (is_active = 2).
+
+    Used to retry enrichments that previously failed (OMDb had no match or
+    the result was rejected as a mismatch). After resetting, a normal OMDb
+    enrichment pass will pick them up again.
+
+    Returns:
+        int: Number of records reset.
+    """
+    with _write_lock:
+        conn = get_db_connection()
+        try:
+            cursor = conn.execute(
+                "UPDATE movies SET is_active = 2 WHERE is_active = 4"
+            )
+            conn.commit()
+            return cursor.rowcount
+        finally:
+            conn.close()
+
+
 # =============================================================================
 # UNIFIED STORAGE OPERATIONS
 # =============================================================================

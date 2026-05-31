@@ -51,7 +51,8 @@ from storage import (
     update_sqlite_record,
     read_csv,
     update_csv,
-    get_all_movies_sqlite
+    get_all_movies_sqlite,
+    reset_failed_to_pending_omdb
 )
 from gemini_client import identify_movie
 from omdb_client import fetch_movie_data, fetch_by_imdb_id, fetch_by_title
@@ -513,6 +514,40 @@ def enrich_with_omdb(limit: Optional[int] = None) -> int:
     
     logger.info(f"OMDb enrichment complete. Enriched {enriched_count} movies.")
     return enriched_count
+
+
+# =============================================================================
+# RETRY FAILED
+# =============================================================================
+
+def retry_failed_omdb(limit: Optional[int] = None) -> int:
+    """
+    Retry movies that previously failed OMDb enrichment (is_active = 4).
+
+    Resets failed movies back to pending OMDb (is_active = 2) and runs the
+    OMDb enrichment pass again. This recovers:
+      - transient failures (network/rate errors at the time), and
+      - matches that now succeed via the AI IMDb ID (the verified-ID path
+        skips the title/year verification that may have rejected them).
+
+    Movies that fail again are returned to is_active = 4. Genuinely
+    unmatchable titles will keep failing and are best fixed via the web UI
+    manual search, or by re-running AI enrichment to get a better title/ID.
+
+    Args:
+        limit (int, optional): Maximum number of movies to process.
+
+    Returns:
+        int: Number of movies processed by the OMDb pass (0 if none failed).
+    """
+    reset_count = reset_failed_to_pending_omdb()
+    logger.info(f"Reset {reset_count} failed movie(s) to pending OMDb")
+
+    if reset_count == 0:
+        logger.info("No failed movies to retry")
+        return 0
+
+    return enrich_with_omdb(limit)
 
 
 # =============================================================================
