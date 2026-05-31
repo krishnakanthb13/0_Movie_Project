@@ -355,10 +355,14 @@ Examples:
                              "reset them to pending and run OMDb again")
     parser.add_argument("--bulk", action="store_true",
                         help="Use text-based bulk enrichment (faster, uses configured AI model)")
-    parser.add_argument("--model", choices=["2.5", "3.5"],
-                        help="Gemini Flash model for AI enrichment: "
-                             "2.5 (gemini-2.5-flash, higher free-tier quota) or "
-                             "3.5 (gemini-3.5-flash, latest). Default: config AI_MODEL.")
+    parser.add_argument("--provider", choices=["gemini", "groq"],
+                        help="AI provider for enrichment (default: config AI_PROVIDER). "
+                             "groq requires GROQ_API_KEY in .env.")
+    parser.add_argument("--model",
+                        help="Model for AI enrichment. Gemini shortcuts: 2.5, 3.5. "
+                             "Or a full model id (e.g. a Groq model like "
+                             "llama-3.3-70b-versatile or groq/compound). "
+                             "Default: the provider's configured model.")
     
     # Server operations
     parser.add_argument("--server", action="store_true", 
@@ -375,15 +379,19 @@ Examples:
         return
     
     # -----------------------------------------------------------------
-    # MODEL SELECTION (optional override)
-    # Map the friendly --model choice to a full Gemini model id and apply it
-    # for this run. Affects AI enrichment (formatter + bulk); the Live API
-    # search model is separate.
+    # PROVIDER / MODEL SELECTION (optional overrides)
+    # Choose the AI provider (gemini/groq) and model for this run. Gemini
+    # accepts the friendly 2.5/3.5 shortcuts; any other value is passed
+    # through as a full model id (e.g. a Groq model). Affects AI enrichment;
+    # the Gemini Live API search model is separate.
     # -----------------------------------------------------------------
-    MODEL_CHOICES = {"2.5": "gemini-2.5-flash", "3.5": "gemini-3.5-flash"}
-    if args.model:
-        from gemini_client import set_formatter_model
-        set_formatter_model(MODEL_CHOICES[args.model])
+    MODEL_ALIASES = {"2.5": "gemini-2.5-flash", "3.5": "gemini-3.5-flash"}
+    if args.provider or args.model:
+        import ai_provider
+        if args.provider:
+            ai_provider.set_provider(args.provider)
+        if args.model:
+            ai_provider.set_model(MODEL_ALIASES.get(args.model, args.model))
 
     # -----------------------------------------------------------------
     # COMMAND DISPATCH

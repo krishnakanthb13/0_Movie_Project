@@ -155,6 +155,12 @@ def set_formatter_model(model_name: str) -> None:
     logger.info(f"AI formatter model set to: {model_name}")
 
 
+# Uniform name shared with the other provider clients (see ai_provider).
+def set_model(model_name: str) -> None:
+    """Alias for set_formatter_model() — the provider-agnostic model setter."""
+    set_formatter_model(model_name)
+
+
 # =============================================================================
 # RATE-LIMIT HANDLING
 # =============================================================================

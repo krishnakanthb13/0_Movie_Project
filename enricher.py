@@ -54,7 +54,7 @@ from storage import (
     get_all_movies_sqlite,
     reset_failed_to_pending_omdb
 )
-from gemini_client import identify_movie
+from ai_provider import identify_movie
 from omdb_client import fetch_movie_data, fetch_by_imdb_id, fetch_by_title
 
 import re
@@ -297,8 +297,8 @@ def enrich_with_ai_bulk(limit: Optional[int] = None) -> int:
         >>> count = enrich_with_ai_bulk(limit=100)
         >>> print(f"Enriched {count} movies in bulk mode")
     """
-    from gemini_client import identify_movies_bulk
-    
+    from ai_provider import identify_movies_bulk
+
     # Get movies pending AI enrichment
     movies = get_unenriched_movies()
     

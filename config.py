@@ -147,6 +147,13 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 # Type: str (empty string if not set)
 OMDB_API_KEY = os.getenv("OMDB_API_KEY", "")
 
+# GROQ_API_KEY: Groq API key for the alternative AI provider.
+# Groq serves fast open models (Llama, etc.) via an OpenAI-compatible API.
+# Obtain from: https://console.groq.com/keys
+# Required only when AI_PROVIDER="groq" or --provider groq is used.
+# Type: str (empty string if not set)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+
 # =============================================================================
 # ENRICHMENT SETTINGS
 # =============================================================================
@@ -172,6 +179,21 @@ AI_TIMEOUT_SECONDS = 120
 # Type: int
 # Range: 10 - 100 recommended
 BATCH_SIZE = 50
+
+# AI_PROVIDER: Which AI backend to use for movie identification.
+# "gemini" - Google Gemini (2-step Live API search + JSON formatting; uses
+#            Google Search grounding for accurate IMDb IDs).
+# "groq"   - Groq (fast open models via OpenAI-compatible API; identifies from
+#            model knowledge, no web search - OMDb still verifies by title/year).
+# Override per run with --provider on the CLI.
+# Type: str ("gemini" or "groq")
+AI_PROVIDER = os.getenv("AI_PROVIDER", "gemini")
+
+# GROQ_MODEL: Default Groq model used when AI_PROVIDER="groq".
+# Browse available models at https://console.groq.com/docs/models
+# Override per run with --model on the CLI.
+# Type: str
+GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # AI_MODEL: Gemini model used for JSON formatting (Step 2 of pipeline) and
 # for bulk identification. This model receives the search transcript and
