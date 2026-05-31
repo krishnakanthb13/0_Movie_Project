@@ -2,7 +2,7 @@
 
 This document provides technical details about each module, their dependencies, parameters, and how they interconnect in the **Movie Library Manager**.
 
-> **Project layout:** all Python modules referenced below live in the **`src/`** directory (e.g. `src/config.py`, `src/server.py`); these docs live in **`docs/`**; `web/` and `data/` are at the repo root. The app is launched from the repo root via `python src/main.py ...` (or `MovieLibrary.bat`), which puts `src/` on the import path.
+> **Project layout:** all Python modules referenced below live in the **`src/`** directory (e.g. `src/config.py`, `src/server.py`); these docs live in **`docs/`**; `web/`, `data/`, and `tests/` are at the repo root. The app is launched from the repo root via `python src/main.py ...` (or `MovieLibrary.bat`), which puts `src/` on the import path.
 
 ---
 
@@ -366,9 +366,14 @@ Step 2: JSON Formatter
 | POST | `/play` | `{uuid}` | Launches VLC |
 | POST | `/api/open-folder` | `{uuid}` | Opens Explorer (selects file) |
 | POST | `/api/manual-enrich` | `{uuid, imdb_id?, title?, year?}` | Updates movie via OMDb, sets state 3, syncs CSV |
-| POST | `/api/update-metadata` | `{uuid, user_rating?, user_tags?}` | Updates user fields; 404 (`Movie not found`) on unknown uuid |
+| POST | `/api/update-metadata` | `{uuid, user_rating?, user_tags?}` | Updates user rating/tags in **DB + CSV** (see below) |
 
 **Important**: `/play` and `/api/open-folder` are **POST** (they have side effects — launching VLC / Explorer — so POST prevents CSRF via stray `<img>`/links). They are NOT GET query-string endpoints.
+
+**`update_metadata(data)` (POST `/api/update-metadata`)** — persists a user rating/tags edit from the web UI:
+- Body `{uuid, user_rating?, user_tags?}`. `user_rating` is stringified; `user_tags` accepts either a list (joined with `,`) or a string. The handler only builds an `updates` dict from the keys actually present.
+- Validation: missing `uuid` → `{"status":"error","message":"Missing movie UUID"}`; an unknown uuid is rejected up-front via `get_movie_by_uuid()` → `{"status":"error","message":"Movie not found"}` (so it never reports success for a uuid that updated zero rows); no recognized fields → `{"status":"error","message":"No updates provided"}`. (All of these are returned through `send_json` with a normal 200 — the error is in the JSON `status`, not the HTTP code.)
+- On success it calls `update_sqlite_record(uuid, updates)` **and then `sync_sqlite_to_csv()`**, so user ratings/tags reach the `movies.csv` "source of truth" and not just SQLite — matching `manual_enrich`'s DB+CSV behavior. Success response: `{"status":"success","message":"Metadata updated"}`. Exceptions are logged and returned as `{"status":"error","message":"Update failed (see server log)"}`.
 
 **Server / security hardening**:
 - `ThreadedTCPServer(ThreadingMixIn, TCPServer)` with `daemon_threads = True` and `allow_reuse_address = True` — concurrent requests so a long OMDb fetch can't block the UI.
@@ -381,7 +386,39 @@ Step 2: JSON Formatter
 
 ---
 
-### 11. `main.py` - CLI Entry Point
+### 11. `web/` - Frontend (index.html + enrichment.html)
+
+**Purpose**: Two self-contained, CSP-compatible single-file pages served by `server.py`. Each inlines its own CSS and JS (no bundler, no runtime framework). The only external resource is the Inter web font (Google Fonts `<link>` + `preconnect`); all icons are **inline SVG** (no icon fonts / CDNs), so the pages work under the strict CSP the server sends.
+
+**Shared design system** (duplicated `:root` token block in both files):
+- CSS custom properties on `:root` define the palette, radii (`--r-sm/-r/-r-lg/-r-pill`), shadow scale (`--shadow/-md/-lg`), the focus ring (`--ring`), and a shared transition (`--t`). **Dark is the default**; `[data-theme="light"]` overrides the palette tokens for light mode.
+- Typography is **Inter** (with system-font fallbacks). Accessibility/polish primitives: a global `:focus-visible` ring, and a `@media (prefers-reduced-motion: reduce)` block that collapses transitions/animations.
+- **Theme toggle**: `toggleTheme()` flips `document.documentElement.dataset.theme` between `dark`/`light` and persists via `savePref('theme', …)`; on load the saved value is read with `loadPref('theme', 'dark')` and applied (`applyTheme`). Both pages share the same `loadPref`/`savePref` localStorage helpers (JSON-encoded, try/catch-guarded). The toggle swaps an inline sun/moon SVG to show the theme you'd switch *to*.
+
+**`index.html` — main library view** (`<script>` at the bottom of the file):
+- **Load flow**: `loadMovies()` renders skeletons (`renderSkeletons`), `fetch('/api/movies')` → `parseApiResponse` (guards on `response.ok`, surfaces the status reason instead of an opaque JSON parse error), stores the array in `allMovies`, stamps a stable baseline order (`m._order`) used by the "Recent" sort, then `populateFilters()` + `filterMovies()`. Failures call `renderError` (retry button).
+- **Render pipeline**: `filterMovies()` filters `allMovies` (text query across title/ai_title/file_name/extracted_name/genre/actors/director/plot/user_tags, plus genre/decade/language `activeFilters`), then a **sort stage** `sortMovies()` applies the active mode before rendering. Sort modes (segmented control, persisted via `savePref('sort', …)`, applied by `setSort`): `recent` (baseline `_order`), `yearDesc`/`yearAsc`, `ratingDesc`, `titleAsc`.
+- **Status bar**: `renderStatusBar()` shows a "Showing X of Y movies" count and **removable filter chips** (search / genre / year / language); each chip's value is set via `textContent` and its X button clears that one filter.
+- **Incremental rendering** (replaces the old hard 100-item cap): `renderMovies()` renders `PAGE_SIZE` (60) cards per batch via one `innerHTML`/template append. While more remain it appends a **"Load N more (… remaining)" button** plus a `#scrollSentinel` watched by an **`IntersectionObserver`** (`rootMargin: 600px`) for infinite scroll; both call `renderMovies(null, false)` to append the next page.
+- **States**: skeleton (`renderSkeletons`), empty (`renderEmpty`, "No movies match your filters"), and error (`renderError`) panels. Posters lazy-load on click by default (`loadPosterImage`, resolved by class not sibling position) unless "Auto Images" is on; preferences (`showPosters`, `isListView`, `autoLoadImages`, `theme`, `sort`) all persist via `loadPref`/`savePref`.
+- **User rating + tags editor** (in the detail modal, `showInfo` → `wireRatingEditor`): a 1–10 star row (`star-btn`, click the current value again to clear) plus a comma-separated tags input. `saveMetadata()` POSTs `{uuid, user_rating, user_tags}` to `/api/update-metadata`, and on `{"status":"success"}` updates the matching record in `allMovies` **in place** and re-renders just that card (`rerenderCard`, found via `CSS.escape(uuid)`), then toasts.
+
+**Preserved security primitives** (intact in the new UI, both pages where applicable):
+- `escapeHtml(text)` escapes `& < > " '` (quotes included), so interpolated strings are safe in both element text and quoted attributes.
+- `safePosterUrl(url)` accepts only absolute `http:`/`https:` URLs (parsed via `new URL`); `javascript:`/`data:`/relative/break-out values throw or are rejected → `null`.
+- **Event delegation**: card buttons carry only `data-action` (+ the card's `data-uuid`); the click handler on `#movieContainer` looks the movie up from `allMovies` by uuid, so **no movie data is interpolated into inline `on*` handlers** (removes the old `onclick="showInfo(${JSON.stringify(movie)})"` XSS/break-out class).
+- `parseApiResponse(response)` throws on non-`response.ok`; modal **focus trap** (`activateModalFocus`/`trapModalTab`/`restoreModalFocus`, Tab kept inside the open dialog, focus restored on close); `showToast` uses `textContent` so server/error text can't inject markup.
+
+**`enrichment.html` — enrichment manager** (same design system & helpers — `loadPref`/`savePref`/`toggleTheme`/`escapeHtml`/`showToast`/`safePosterUrl`):
+- A **segmented `role="tablist"`** with two tabs (Pending / Enriched) carrying **live counts** (`updateCounts` sets `#countPending`/`#countEnriched`; a movie counts as enriched once it has a real OMDb `title`). `switchTab()` toggles `aria-selected` and re-renders.
+- A **client-side search filter**: the `#searchInput` (`oninput="render()"`) filters the current tab's rows across `file_name`/`title`/`ai_title`/`extracted_name`.
+- **Skeleton / empty / error states**: `showSkeleton()` (4 placeholder rows) on first load, an empty-state panel (search-specific vs. "Nothing pending"/"No enriched movies yet" copy), and an inline error panel if `/api/movies` fails. Per-row inputs (title/year/IMDb ID/rating/tags) feed manual updates, and a **premium info modal** (`#infoModal`, `role="dialog"` + `aria-modal`) shows full details. All movie fields are `escapeHtml`-escaped before insertion.
+
+**Dependencies**: served by `server.py`; talks to `/api/movies`, `/play`, `/api/open-folder`, `/api/manual-enrich`, `/api/update-metadata`. No JS libraries; Inter font via Google Fonts `<link>`.
+
+---
+
+### 12. `main.py` - CLI Entry Point
 
 **Purpose**: Command-line interface for all operations.
 
@@ -441,19 +478,27 @@ Step 2: JSON Formatter
 
 ## Environment Management
 
-### 12. `setup_env.bat` - Environment Manager
+### 13. `setup_env.bat` - Environment Manager
 
 **Purpose**: Sets up an isolated virtual environment using `uv`.
 - **Checks for `uv`**: Verifies that the `uv` tool is installed.
 - **Creates `.venv`**: Initializes a local virtual environment.
 - **Installs Dependencies**: Installs packages from `requirements.txt` using `uv pip`.
 
-### 13. `MovieLibrary.bat` - Windows Launcher
+### 14. `MovieLibrary.bat` - Windows Launcher
 
 **Purpose**: Environment-aware launcher for the application.
 - **Auto-Activation**: Detects and activates the `.venv` folder automatically.
 - **Menu System**: Provides a user-friendly interface for scanning, enriching, and starting the server.
 - **Setup Integration**: Includes an option to run `setup_env.bat` directly.
+
+---
+
+## Testing
+
+A top-level **`tests/`** directory holds regression tests run directly with Python (each file has a `main()` and runs standalone — no test-runner dependency).
+
+- **`tests/test_update_metadata_csv_sync.py`** — regression test for the `/api/update-metadata` endpoint. It monkeypatches `storage.CSV_FILE`/`storage.SQLITE_FILE` to a temp dir (no real data or network), builds a real `MovieRequestHandler` via `__new__` (skipping the socket-bound `__init__`) with `send_json` stubbed to capture the response, then exercises `update_metadata()` directly. It asserts that a valid update lands in **both SQLite and `movies.csv`** (guarding the CSV-sync fix), and that an unknown uuid returns `Movie not found` and writes nothing.
 
 ---
 

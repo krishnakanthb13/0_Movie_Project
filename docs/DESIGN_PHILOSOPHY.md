@@ -37,6 +37,9 @@ This project creates an **AI-powered Private Streaming Service** experience for 
 
 4. **✨ Aesthetic Excellence**
    - The interface is designed to FEEL premium. Glassmorphism, smooth animations, and a carefully chosen dark theme ensure a "wow" factor.
+   - **A self-contained design system.** The web UI is a premium "media dashboard" built on a shared set of design tokens (CSS variables) that drive a single dark/light theming switch (dark default, persisted). It ships inline — CSS, JS, and SVG icons all live in the page — so it stays CSP-compatible with zero external dependencies.
+   - **Accessibility is part of the polish.** Modals trap focus and restore it on close, controls carry `aria` roles/labels and live regions announce result counts, and a `prefers-reduced-motion` path quiets animations for users who ask for it.
+   - **Progressive disclosure keeps it calm.** Detail and search modals surface depth on demand, while the library renders incrementally (load-more + infinite scroll with skeleton, empty, and error states) so a 1000+ movie collection never overwhelms the first paint.
 
 5. **🚀 Simplicity & Speed**
    - One-click VLC playback.

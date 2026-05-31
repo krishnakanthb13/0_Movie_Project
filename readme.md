@@ -179,14 +179,32 @@ http://localhost:8010
 
 | Feature | Description |
 |---------|-------------|
-| 🔍 **Search** | Real-time filtering across titles, actors, genres |
+| 🔍 **Search** | Real-time filtering across title, AI title, file name, genre, actors, director, plot & tags |
 | 📂 **Filters** | Filter by Genre, Decade, and Language |
+| 🔢 **Sort** | Recently added (default), Year ↑/↓, Rating (high→low), Title A–Z |
+| 🏷️ **Filter chips + count** | "Showing X of Y" result count with removable active-filter chips (search term / genre / year / language) |
+| ⭐ **Your ratings & tags** | Rate movies 1–10 and add personal tags in the detail modal; saved via `POST /api/update-metadata` and persisted to **both** SQLite **and** `movies.csv`. Cards show a "your rating" badge + tag pills |
+| 🎲 **Surprise me** | Open a random movie from the library |
+| 🔗 **Open on IMDb** | Jump to the movie's IMDb page (uses `imdb_id`) |
 | ▶ **Play** | Launch movies directly in VLC |
 | 📂 **Open Folder** | Open containing folder in Explorer |
 | 🔍 **Manual Search** | Manually search/fix movie data via OMDb |
 | ℹ **Info** | View full movie details in modal |
-| 👁️ **Views** | Toggle Grid/List/Wall view modes |
-| 🖼️ **Posters** | Toggle poster visibility for performance |
+| 👁️ **Views** | Toggle Grid / List view modes |
+| 🖼️ **Posters / ⚡ Auto-Images** | Toggle poster visibility / auto-loading for performance |
+| 🌗 **Theme toggle** | Switch light/dark (dark default, persisted to `localStorage`) |
+| ⌨️ **Keyboard shortcuts** | `/` focuses search, `r` surprise me, `Esc` closes modals |
+
+> **Premium media dashboard (v1.4.0):** the viewer now renders incrementally with a
+> **Load more** button plus infinite scroll (replacing the old fixed 100-card cap), and
+> shows polished **skeleton** loading and **empty / error (with Retry)** states. All toggles
+> (theme, sort, view, posters, auto-images) persist across reloads.
+
+### Enrichment Manager (`enrichment.html`)
+
+The admin page is restyled to match the viewer: segmented **Pending / Enriched** tabs with
+live counts, a quick search box, a premium info modal, skeleton/empty states, and the same
+light/dark theme toggle.
 
 ---
 
@@ -218,8 +236,10 @@ http://localhost:8010
 - **Dual Storage**: CSV for portability + SQLite for speed
 
 ### Web Dashboard
-- **Premium Dark UI**: Glassmorphism effects and smooth animations
-- **Performance**: Lazy loading for large collections (1000+ movies)
+- **Premium media-dashboard UI**: light/dark theming (dark default, persisted), glassmorphism, and smooth animations — all self-contained (inline CSS/JS + inline SVG icons), CSP-compatible, with no new external dependencies
+- **Browse controls**: sort (recently added / year / rating / title), removable filter chips with a "Showing X of Y" count, surprise-me random pick, IMDb deep links, and keyboard shortcuts (`/`, `r`, `Esc`)
+- **Personal ratings & tags**: rate 1–10 and tag movies in-app; persisted to **both** the SQLite DB and `movies.csv`
+- **Performance**: incremental rendering (load-more + infinite scroll) with skeleton loading and polished empty / error (Retry) states for large collections (1000+ movies)
 - **VLC Integration**: One-click playback
 - **Multi-threaded server**: handles concurrent requests so the UI stays responsive
 - **Security-hardened**: binds to `localhost` by default; side-effecting actions
