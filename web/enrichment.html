@@ -229,6 +229,30 @@
         let allMovies = [];
         let currentTab = 'pending';
 
+        // Escape untrusted strings before inserting into HTML. All movie
+        // fields originate from filenames on disk, the OMDb API, or user
+        // input, so they must never be trusted in innerHTML/attributes.
+        // Escapes the quote characters too, so the result is safe inside
+        // double/single-quoted attributes (e.g. value="...") as well as
+        // element text.
+        const _HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            return String(text).replace(/[&<>"']/g, c => _HTML_ESCAPES[c]);
+        }
+
+        // Only allow http(s) poster URLs; reject anything else (e.g. an
+        // attribute-breakout payload or a javascript:/data: scheme).
+        function safePosterUrl(url) {
+            if (!url || url === 'NA') return null;
+            try {
+                const u = new URL(url, window.location.href);
+                return (u.protocol === 'http:' || u.protocol === 'https:') ? u.href : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
         async function init() {
             try {
                 const res = await fetch('/api/movies');
@@ -267,24 +291,31 @@
                 const displayTitle = movie.ai_title !== 'NA' ? movie.ai_title : movie.extracted_name;
                 const displayYear = movie.ai_year !== 'NA' ? movie.ai_year : movie.extracted_year;
 
+                const titleVal = escapeHtml(displayTitle !== 'NA' ? displayTitle : '');
+                const yearVal = escapeHtml(displayYear !== 'NA' ? displayYear : '');
+                const imdbVal = escapeHtml(movie.imdb_id !== 'NA' ? movie.imdb_id : '');
+                const rateVal = escapeHtml(movie.user_rating !== 'NA' && movie.user_rating ? movie.user_rating : '');
+                const tagsVal = escapeHtml(movie.user_tags !== 'NA' && movie.user_tags ? movie.user_tags : '');
+                const uuid = escapeHtml(movie.uuid);
+
                 row.innerHTML = `
                     <div class="movie-info">
-                        <div class="file-name">${movie.file_name}</div>
-                        <div class="movie-title">${displayTitle} (${displayYear})</div>
+                        <div class="file-name">${escapeHtml(movie.file_name)}</div>
+                        <div class="movie-title">${escapeHtml(displayTitle)} (${escapeHtml(displayYear)})</div>
                     </div>
-                    
+
                     <div class="inputs">
-                        <input type="text" class="title-input" placeholder="Title" value="${displayTitle !== 'NA' ? displayTitle : ''}" id="title-${movie.uuid}">
-                        <input type="text" class="year-input" placeholder="Year" value="${displayYear !== 'NA' ? displayYear : ''}" id="year-${movie.uuid}">
-                        <input type="text" class="imdb-input" placeholder="IMDb ID" value="${movie.imdb_id !== 'NA' ? movie.imdb_id : ''}" id="imdb-${movie.uuid}">
-                        <input type="number" class="year-input" placeholder="Rate" min="0" max="10" value="${movie.user_rating !== 'NA' && movie.user_rating ? movie.user_rating : ''}" id="rate-${movie.uuid}" title="User Rating (0-10)">
-                        <input type="text" class="imdb-input" placeholder="Tags" value="${movie.user_tags !== 'NA' && movie.user_tags ? movie.user_tags : ''}" id="tags-${movie.uuid}" title="Comma-separated tags">
+                        <input type="text" class="title-input" placeholder="Title" value="${titleVal}" id="title-${uuid}">
+                        <input type="text" class="year-input" placeholder="Year" value="${yearVal}" id="year-${uuid}">
+                        <input type="text" class="imdb-input" placeholder="IMDb ID" value="${imdbVal}" id="imdb-${uuid}">
+                        <input type="number" class="year-input" placeholder="Rate" min="0" max="10" value="${rateVal}" id="rate-${uuid}" title="User Rating (0-10)">
+                        <input type="text" class="imdb-input" placeholder="Tags" value="${tagsVal}" id="tags-${uuid}" title="Comma-separated tags">
                     </div>
 
                     <div class="actions">
                         ${currentTab === 'enriched' ?
-                        `<button class="btn-info" onclick="showInfo('${movie.uuid}')">Info</button>` : ''}
-                        <button class="btn-update" onclick="updateMovie('${movie.uuid}', event)">
+                        `<button class="btn-info" onclick="showInfo('${uuid}')">Info</button>` : ''}
+                        <button class="btn-update" onclick="updateMovie('${uuid}', event)">
                             ${currentTab === 'enriched' ? 'Update' : 'Enrich'}
                         </button>
                     </div>
@@ -346,16 +377,17 @@
             if (!movie) return;
 
             const content = document.getElementById('modalContent');
+            const poster = safePosterUrl(movie.poster);
             content.innerHTML = `
                 <div style="display:flex; gap:20px; align-items:start;">
-                    ${movie.poster !== 'NA' ? `<img src="${movie.poster}" style="width:150px; border-radius:8px;">` : ''}
+                    ${poster ? `<img src="${escapeHtml(poster)}" alt="${escapeHtml(movie.title)} poster" style="width:150px; border-radius:8px;">` : ''}
                     <div>
-                        <h3>${movie.title} (${movie.year})</h3>
-                        <p><strong>Genre:</strong> ${movie.genre}</p>
-                        <p><strong>Director:</strong> ${movie.director}</p>
-                        <p><strong>Actors:</strong> ${movie.actors}</p>
-                        <p><strong>Plot:</strong> ${movie.plot}</p>
-                        <p><strong>IMDb:</strong> ${movie.imdb_rating} (${movie.imdb_id})</p>
+                        <h3>${escapeHtml(movie.title)} (${escapeHtml(movie.year)})</h3>
+                        <p><strong>Genre:</strong> ${escapeHtml(movie.genre)}</p>
+                        <p><strong>Director:</strong> ${escapeHtml(movie.director)}</p>
+                        <p><strong>Actors:</strong> ${escapeHtml(movie.actors)}</p>
+                        <p><strong>Plot:</strong> ${escapeHtml(movie.plot)}</p>
+                        <p><strong>IMDb:</strong> ${escapeHtml(movie.imdb_rating)} (${escapeHtml(movie.imdb_id)})</p>
                     </div>
                 </div>
             `;
