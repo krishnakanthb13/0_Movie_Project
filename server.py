@@ -268,7 +268,7 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
         Side Effects:
             - Updates SQLite record with OMDb data
             - Syncs changes to CSV
-            - Sets is_active to 2 (enriched)
+            - Sets is_active to 3 (fully enriched / success)
         """
         try:
             # Extract parameters

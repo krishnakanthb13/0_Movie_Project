@@ -1225,7 +1225,7 @@
                 }
             }
 
-            const hasOmdbData = movie.title !== 'NA' || movie.plot !== 'NA';
+            const hasOmdbData = (movie.title && movie.title !== 'NA') || (movie.plot && movie.plot !== 'NA');
 
             return `<div class="movie-card" data-uuid="${escapeHtml(movie.uuid)}">${posterHtml}
                     <div class="card-content">
@@ -1434,7 +1434,7 @@
             {
 
                 label: 'IMDb Rating',
-                value: movie.imdb_rating !== 'NA' ? `⭐ ${movie.imdb_rating}` : 'NA'
+                value: (movie.imdb_rating && movie.imdb_rating !== 'NA') ? `⭐ ${movie.imdb_rating}` : 'NA'
             }
 
                 ,
