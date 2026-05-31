@@ -2,6 +2,8 @@
 
 This document provides technical details about each module, their dependencies, parameters, and how they interconnect in the **Movie Library Manager**.
 
+> **Project layout:** all Python modules referenced below live in the **`src/`** directory (e.g. `src/config.py`, `src/server.py`); these docs live in **`docs/`**; `web/` and `data/` are at the repo root. The app is launched from the repo root via `python src/main.py ...` (or `MovieLibrary.bat`), which puts `src/` on the import path.
+
 ---
 
 ## Architecture Overview

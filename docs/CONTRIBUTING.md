@@ -55,7 +55,7 @@ Before submitting a PR, please verify:
 - [ ] Code follows Python PEARL/PEP8 standards.
 - [ ] New functions have docstrings and basic error handling.
 - [ ] The web UI still loads and filters correctly.
-- [ ] `main.py --stats` runs without error.
+- [ ] `python src/main.py --stats` runs without error.
 - [ ] No API keys or secrets are committed.
 
 ## 📜 License

@@ -66,7 +66,7 @@ AI_PROVIDER=gemini
 
 ### Step 2: Configure Paths (Optional)
 
-Edit `config.py` to customize:
+Edit `src/config.py` to customize:
 
 ```python
 # Directory to scan for movies (default: E:/)
@@ -106,43 +106,43 @@ SERVER_PORT = 8010
 
 ```bash
 # Scan for movies
-python main.py --scan
+python src/main.py --scan
 
 # Scan with limit (for testing)
-python main.py --scan --limit 50
+python src/main.py --scan --limit 50
 
 # Run AI enrichment (uses the configured/default provider)
-python main.py --enrich --limit 10
+python src/main.py --enrich --limit 10
 
 # Run bulk AI enrichment (faster, uses single API call)
-python main.py --enrich --bulk --limit 100
+python src/main.py --enrich --bulk --limit 100
 
 # Choose the AI provider and model for a run
-python main.py --enrich --provider gemini --model 2.5      # Gemini 2.5 Flash (default)
-python main.py --enrich --provider gemini --model 3.5      # Gemini 3.5 Flash
-python main.py --enrich --provider groq --model llama-3.3-70b-versatile
-python main.py --enrich --provider groq --model groq/compound   # web-search grounded
+python src/main.py --enrich --provider gemini --model 2.5      # Gemini 2.5 Flash (default)
+python src/main.py --enrich --provider gemini --model 3.5      # Gemini 3.5 Flash
+python src/main.py --enrich --provider groq --model llama-3.3-70b-versatile
+python src/main.py --enrich --provider groq --model groq/compound   # web-search grounded
 
 # Fetch OMDb metadata
-python main.py --fetch-omdb --limit 10
+python src/main.py --fetch-omdb --limit 10
 
 # Run full pipeline (AI + OMDb)
-python main.py --full-enrich
+python src/main.py --full-enrich
 
 # Retry movies that previously failed OMDb (state 4 -> 2, re-run OMDb)
-python main.py --retry-failed
+python src/main.py --retry-failed
 
 # Start web server
-python main.py --server
+python src/main.py --server
 
 # Show database statistics
-python main.py --stats
+python src/main.py --stats
 
 # Check for missing files
-python main.py --check-missing
+python src/main.py --check-missing
 
 # Remove missing movie entries
-python main.py --cleanup
+python src/main.py --cleanup
 ```
 
 ### CLI Flags Reference
@@ -233,20 +233,31 @@ http://localhost:8010
 
 ```
 📂 0_Movie_Project/
-├── 📄 main.py              # CLI entry point
-├── 📄 server.py            # HTTP server for web viewer
-├── 📄 config.py            # Centralized configuration
-├── 📄 scanner.py           # File system scanner
-├── 📄 parser.py            # Filename parser
-├── 📄 enricher.py          # Enrichment pipeline orchestrator
-├── 📄 ai_provider.py       # AI provider dispatcher (Gemini / Groq)
-├── 📄 gemini_client.py     # Gemini AI integration
-├── 📄 groq_client.py       # Groq AI integration (alternative provider)
-├── 📄 omdb_client.py       # OMDb API client
-├── 📄 storage.py           # CSV/SQLite data layer
-├── 📄 MovieLibrary.bat     # Windows batch launcher
+├── 📄 README.md            # This file
+├── 📄 LICENSE              # GNU GPLv3
 ├── 📄 requirements.txt     # Python dependencies
 ├── 📄 .env                 # API keys (create this)
+├── 📄 MovieLibrary.bat     # Windows batch launcher (menu)
+├── 📄 setup_env.bat        # Virtual-environment setup
+├── 📂 src/                 # Application source
+│   ├── main.py             # CLI entry point
+│   ├── server.py           # HTTP server for web viewer
+│   ├── config.py           # Centralized configuration
+│   ├── scanner.py          # File system scanner
+│   ├── parser.py           # Filename parser
+│   ├── enricher.py         # Enrichment pipeline orchestrator
+│   ├── ai_provider.py      # AI provider dispatcher (Gemini / Groq)
+│   ├── gemini_client.py    # Gemini AI integration
+│   ├── groq_client.py      # Groq AI integration (alternative provider)
+│   ├── omdb_client.py      # OMDb API client
+│   ├── storage.py          # CSV/SQLite data layer
+│   ├── clean_names.py      # Title-cleanup utility
+│   └── reset_data.py       # Data reset utility
+├── 📂 docs/                # Documentation
+│   ├── CODE_DOCUMENTATION.md
+│   ├── DESIGN_PHILOSOPHY.md
+│   ├── CONTRIBUTING.md
+│   └── Movie_Project_Requirements.md
 ├── 📂 web/                 # Frontend files
 │   ├── index.html          # Main viewer page
 │   ├── enrichment.html     # Enrichment manager
@@ -294,7 +305,7 @@ fixed with the web viewer's **Manual Search**.
 
 | Issue | Solution |
 |-------|----------|
-| "VLC not found" | Update `VLC_PATH` in `config.py` |
+| "VLC not found" | Update `VLC_PATH` in `src/config.py` |
 | "API key not set" | Add keys to `.env` file |
 | "Permission denied" | Run as Administrator or check folder permissions |
 | Movies not showing | Run `--sync` to refresh database |
@@ -319,6 +330,6 @@ For the full license text, see: https://www.gnu.org/licenses/gpl-3.0.html
 ## 🤝 Contributing
 
 Contributions are welcome! Please see the documentation in:
-- [DESIGN_PHILOSOPHY.md](DESIGN_PHILOSOPHY.md) - Project philosophy and design goals
-- [CODE_DOCUMENTATION.md](CODE_DOCUMENTATION.md) - Technical implementation details
-- [CONTRIBUTING.md](CONTRIBUTING.md) - Guidelines for contributors
+- [docs/DESIGN_PHILOSOPHY.md](docs/DESIGN_PHILOSOPHY.md) - Project philosophy and design goals
+- [docs/CODE_DOCUMENTATION.md](docs/CODE_DOCUMENTATION.md) - Technical implementation details
+- [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) - Guidelines for contributors
