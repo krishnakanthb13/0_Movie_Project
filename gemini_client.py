@@ -657,9 +657,7 @@ def identify_movies_bulk(movies: list) -> list:
     """
     if not movies:
         return []
-        
-    client = get_client()
-    
+
     # Build input list text (one line per movie)
     input_lines = []
     for m in movies:

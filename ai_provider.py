@@ -33,7 +33,15 @@ _PROVIDERS = {
 }
 
 # Active provider, seeded from config (overridable via set_provider()).
-_active = config.AI_PROVIDER if config.AI_PROVIDER in _PROVIDERS else "gemini"
+if config.AI_PROVIDER in _PROVIDERS:
+    _active = config.AI_PROVIDER
+else:
+    if config.AI_PROVIDER:
+        logger.warning(
+            f"Unknown AI_PROVIDER {config.AI_PROVIDER!r} in config; "
+            f"falling back to 'gemini' (valid: {list(_PROVIDERS)})"
+        )
+    _active = "gemini"
 
 
 def set_provider(name: str) -> None:

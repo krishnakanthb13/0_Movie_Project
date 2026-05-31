@@ -362,7 +362,10 @@ Examples:
                         help="Model for AI enrichment. Gemini shortcuts: 2.5, 3.5. "
                              "Or a full model id (e.g. a Groq model like "
                              "llama-3.3-70b-versatile or groq/compound). "
-                             "Default: the provider's configured model.")
+                             "Default: the provider's configured model. "
+                             "(For Gemini this sets the formatter/bulk model; the "
+                             "Live-API search model used by the standard --enrich "
+                             "path is configured separately as AI_SEARCH_MODEL.)")
     
     # Server operations
     parser.add_argument("--server", action="store_true", 
