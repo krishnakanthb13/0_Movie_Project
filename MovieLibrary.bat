@@ -191,15 +191,15 @@ echo.
 set /p limit="  Enter limit (default 10, 'all' for all): "
 if "%limit%"=="" set limit=10
 
+call :CHOOSE_MODEL
+
 if /i "%limit%"=="all" (
-    python main.py --enrich
+    python main.py --enrich %AIFLAGS%
 ) else (
-    python main.py --enrich --limit %limit%
+    python main.py --enrich %AIFLAGS% --limit %limit%
 )
 echo.
 pause
-goto MENU
-
 goto MENU
 
 :BULK_AI_ENRICH
@@ -215,15 +215,14 @@ echo.
 set /p limit="  Enter limit (default 50, 'all' for all): "
 if "%limit%"=="" set limit=50
 
+call :CHOOSE_MODEL
+
 if /i "%limit%"=="all" (
-    python main.py --enrich --bulk
+    python main.py --enrich --bulk %AIFLAGS%
 ) else (
-    python main.py --enrich --bulk --limit %limit%
+    python main.py --enrich --bulk %AIFLAGS% --limit %limit%
 )
 echo.
-pause
-goto MENU
-
 pause
 goto MENU
 
@@ -240,13 +239,15 @@ echo.
 set /p limit="  Enter limit (default 50, 'all' for all): "
 if "%limit%"=="" set limit=50
 
+call :CHOOSE_MODEL
+
 if /i "%limit%"=="all" (
-    python main.py --enrich --bulk
+    python main.py --enrich --bulk %AIFLAGS%
     echo.
     echo  [Step 1 Complete] Starting OMDb fetch...
     python main.py --fetch-omdb
 ) else (
-    python main.py --enrich --bulk --limit %limit%
+    python main.py --enrich --bulk %AIFLAGS% --limit %limit%
     echo.
     echo  [Step 1 Complete] Starting OMDb fetch...
     python main.py --fetch-omdb --limit %limit%
@@ -288,11 +289,13 @@ echo  This requires both API keys in .env
 echo.
 set /p limit="  Enter number of movies to enrich (or 'all'): "
 echo.
+call :CHOOSE_MODEL
+
 if /i "%limit%"=="all" (
-    python main.py --enrich
+    python main.py --enrich %AIFLAGS%
     python main.py --fetch-omdb
 ) else (
-    python main.py --enrich --limit %limit%
+    python main.py --enrich %AIFLAGS% --limit %limit%
     python main.py --fetch-omdb --limit %limit%
 )
 echo.
@@ -424,6 +427,36 @@ goto MENU
 cls
 call setup_env.bat
 goto START
+
+:CHOOSE_MODEL
+:: Prompts for the AI provider/model and sets %AIFLAGS% for the python call.
+:: Called by the AI enrichment actions (A, C, K, L).
+echo.
+echo  --- Select AI Provider / Model ---
+echo   [1] Gemini 2.5 Flash  (default, higher free quota)
+echo   [2] Gemini 3.5 Flash  (latest)
+echo   [3] Groq - Llama 3.3 70B  (fast, identifies from memory)
+echo   [4] Groq - Compound  (web-search grounded)
+echo   [5] Groq - custom model id
+echo   (Groq options require GROQ_API_KEY in .env)
+echo.
+set /p mc="  Choice [1]: "
+if "%mc%"=="" set mc=1
+set "AIFLAGS="
+if "%mc%"=="2" set "AIFLAGS=--model 3.5"
+if "%mc%"=="3" set "AIFLAGS=--provider groq --model llama-3.3-70b-versatile"
+if "%mc%"=="4" set "AIFLAGS=--provider groq --model groq/compound"
+if "%mc%"=="5" goto :CHOOSE_MODEL_CUSTOM
+echo.
+goto :eof
+
+:CHOOSE_MODEL_CUSTOM
+:: Read the custom id on its own line (not inside an if-block) so plain
+:: %gm% expansion picks up the just-entered value.
+set /p gm="  Enter Groq model id: "
+set "AIFLAGS=--provider groq --model %gm%"
+echo.
+goto :eof
 
 :EXIT
 cls
