@@ -1202,6 +1202,7 @@
 
                 const card = document.createElement('div');
                 card.className = 'movie-card';
+                card.dataset.uuid = movie.uuid;
 
                 // Poster with lazy loading
                 let posterHtml = '';
@@ -1227,18 +1228,18 @@
                     <div class="card-content">
                         <div class="movie-title">${escapeHtml(title || 'Unknown Title')}</div>
                         <div class="movie-meta">
-                            ${year && year !== 'NA' ? `<span class="tag year">${year}</span>` : ''}
-                            ${rating ? `<span class="tag rating">⭐ ${rating}</span>` : ''}
-                            ${genre ? `<span class="tag genre">${genre}</span>` : ''}
+                            ${year && year !== 'NA' ? `<span class="tag year">${escapeHtml(year)}</span>` : ''}
+                            ${rating ? `<span class="tag rating">⭐ ${escapeHtml(rating)}</span>` : ''}
+                            ${genre ? `<span class="tag genre">${escapeHtml(genre)}</span>` : ''}
                             ${movie.is_active == 3 ? '<span class="tag enriched">✔ Enriched</span>' : ''}
                             ${movie.imdb_id && movie.imdb_id !== 'NA' && movie.is_active != 3 ? '<span class="tag hd">IMDb</span>' : ''}
                         </div>
                         <div class="file-name" title="${escapeHtml(movie.file_name)}">${escapeHtml(movie.file_name)}</div>
                         <div class="card-actions">
-                            <button class="play-btn" onclick="playMovie('${movie.uuid}')">▶ Play</button>
-                            <button class="folder-btn" onclick="openFolder('${movie.uuid}')" title="Open Folder">📂</button>
-                            <button class="search-btn" onclick="openSearchModal('${movie.uuid}', '${escapeHtml(movie.extracted_name || '')}', '${movie.extracted_year || ''}')">🔍</button>
-                            ${hasOmdbData ? `<button class="info-btn" onclick='showInfo(${JSON.stringify(movie).replace(/'/g, "&#39;")})'>ℹ</button>` : ''}
+                            <button class="play-btn" data-action="play" aria-label="Play">▶ Play</button>
+                            <button class="folder-btn" data-action="folder" title="Open Folder" aria-label="Open folder">📂</button>
+                            <button class="search-btn" data-action="search" title="Search OMDb" aria-label="Search OMDb">🔍</button>
+                            ${hasOmdbData ? `<button class="info-btn" data-action="info" title="More info" aria-label="More info">ℹ</button>` : ''}
                         </div>
                     </div>`;
                 container.appendChild(card);
@@ -1273,11 +1274,13 @@
             }
         }
 
+        // Escape untrusted strings for safe insertion into HTML. Quotes are
+        // escaped too, so the result is also safe inside double/single-quoted
+        // attributes (title="...", alt="..."), not just element text.
+        const _HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
         function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            if (text === null || text === undefined) return '';
+            return String(text).replace(/[&<>"']/g, c => _HTML_ESCAPES[c]);
         }
 
         function filterMovies() {
@@ -1607,6 +1610,28 @@
                 resultDiv.innerHTML = '<div class="search-result error">❌ Failed to connect to server.</div>';
             }
         }
+
+        // Card action handling via event delegation. Buttons carry only a
+        // data-action; the movie is looked up by uuid from allMovies, so no
+        // movie data is ever interpolated into inline on* handlers. This
+        // removes a class of XSS/break-out bugs and the crashes that the old
+        // onclick="showInfo(${JSON.stringify(movie)})" pattern caused for
+        // titles/plots containing quotes, newlines, or angle brackets.
+        document.getElementById('movieContainer').addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-action]');
+            if (!btn) return;
+            const card = btn.closest('.movie-card');
+            if (!card) return;
+            const movie = allMovies.find(m => m.uuid === card.dataset.uuid);
+            if (!movie) return;
+
+            switch (btn.dataset.action) {
+                case 'play': playMovie(movie.uuid); break;
+                case 'folder': openFolder(movie.uuid); break;
+                case 'search': openSearchModal(movie.uuid, movie.extracted_name || '', movie.extracted_year || ''); break;
+                case 'info': showInfo(movie); break;
+            }
+        });
 
         // Initial load
         loadMovies();
