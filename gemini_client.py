@@ -120,8 +120,67 @@ def get_client() -> genai.Client:
     
     if client is None:
         client = genai.Client(api_key=GEMINI_API_KEY)
-    
+
     return client
+
+
+# =============================================================================
+# RATE-LIMIT HANDLING
+# =============================================================================
+
+def _parse_retry_delay(err) -> Optional[float]:
+    """
+    Extract a server-suggested retry delay (seconds) from a 429 error, if any.
+
+    Gemini 429 responses may include a RetryInfo with `retryDelay: "12s"`.
+    Returns the delay in seconds, or None if not present.
+    """
+    m = re.search(r"retryDelay['\"]?\s*[:=]\s*['\"]?(\d+(?:\.\d+)?)s", str(err))
+    return float(m.group(1)) if m else None
+
+
+def generate_content_with_retry(model: str, contents, config=None, max_retries: int = 4):
+    """
+    Call models.generate_content with backoff on HTTP 429 (rate limit/quota).
+
+    On a 429 (RESOURCE_EXHAUSTED) it waits and retries, honoring the
+    server-suggested retryDelay when present, otherwise using exponential
+    backoff (capped at 60s). After max_retries it re-raises so the caller can
+    skip the item. This handles per-minute throttling gracefully; a hard daily
+    quota will still raise once the retries are exhausted.
+
+    Args:
+        model (str): Model name.
+        contents: Prompt contents.
+        config (dict, optional): generate_content config (e.g. tools).
+        max_retries (int): Maximum number of retries on 429.
+
+    Returns:
+        The generate_content response.
+
+    Raises:
+        The underlying error if it is not a 429, or if retries are exhausted.
+    """
+    gemini_client = get_client()
+    delay = 8.0
+    for attempt in range(max_retries + 1):
+        try:
+            return gemini_client.models.generate_content(
+                model=model, contents=contents, config=config
+            )
+        except Exception as e:
+            msg = str(e)
+            is_rate_limit = "429" in msg or "RESOURCE_EXHAUSTED" in msg
+            if is_rate_limit and attempt < max_retries:
+                wait = _parse_retry_delay(e) or delay
+                logger.warning(
+                    f"Rate limited (429). Backing off {wait:.0f}s "
+                    f"(attempt {attempt + 1}/{max_retries})..."
+                )
+                time.sleep(wait)
+                delay = min(delay * 2, 60.0)
+                continue
+            raise
 
 
 # =============================================================================
@@ -334,14 +393,12 @@ def format_with_gemma(transcript: str) -> Dict:
         # Build the formatting prompt
         prompt = FORMAT_PROMPT.format(transcript=transcript)
         
-        gemini_client = get_client()
-        
-        # Call the formatter model
-        response = gemini_client.models.generate_content(
+        # Call the formatter model (with 429 backoff)
+        response = generate_content_with_retry(
             model=MODEL_FORMATTER,
             contents=prompt
         )
-        
+
         # Extract and clean the response text
         text = response.text.strip()
         
@@ -581,13 +638,13 @@ def identify_movies_bulk(movies: list) -> list:
             "tools": [{"google_search": {}}],
         }
         
-        # Single API call for all movies
-        response = client.models.generate_content(
+        # Single API call for all movies (with 429 backoff)
+        response = generate_content_with_retry(
             model=MODEL_FORMATTER,
             contents=prompt,
             config=config
         )
-        
+
         # Parse output
         text = response.text.strip()
         
