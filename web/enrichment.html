@@ -196,6 +196,32 @@
         .hidden {
             display: none;
         }
+
+        /* Toast notifications (non-blocking feedback) */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 2000;
+        }
+
+        .toast {
+            padding: 12px 18px;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.9em;
+            background: #37474f;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            max-width: 320px;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        .toast-success { background: #2e7d32; }
+        .toast-error { background: #c62828; }
+        .toast-hide { opacity: 0; transform: translateY(10px); }
     </style>
 </head>
 
@@ -239,6 +265,27 @@
         function escapeHtml(text) {
             if (text === null || text === undefined) return '';
             return String(text).replace(/[&<>"']/g, c => _HTML_ESCAPES[c]);
+        }
+
+        // Non-blocking toast notification. Uses textContent, so messages
+        // (including server error text) can't inject markup.
+        function showToast(message, type = 'info') {
+            let container = document.getElementById('toastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toastContainer';
+                container.className = 'toast-container';
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-' + type;
+            toast.setAttribute('role', 'status');
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('toast-hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
 
         // Only allow absolute http(s) poster URLs (what OMDb returns); reject
@@ -371,11 +418,12 @@
                 }
 
                 // Refresh only on success
+                showToast('Saved', 'success');
                 await init();
 
             } catch (error) {
                 console.error('Update failed:', error);
-                alert('Update failed: ' + error.message);
+                showToast('Update failed: ' + error.message, 'error');
             } finally {
                 btn.textContent = originalText;
                 btn.disabled = false;

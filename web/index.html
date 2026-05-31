@@ -810,6 +810,33 @@
             /* Slightly smaller buttons */
         }
 
+        /* Toast notifications (non-blocking feedback) */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 2000;
+        }
+
+        .toast {
+            padding: 12px 18px;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 0.9em;
+            background: #37474f;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            max-width: 320px;
+            opacity: 1;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+        .toast-success { background: #2e7d32; }
+        .toast-error { background: #c62828; }
+        .toast-hide { opacity: 0; transform: translateY(10px); }
+
         /* Clear Button Styles */
 
         .search-clear:hover {
@@ -940,6 +967,27 @@
         function debouncedFilter() {
             clearTimeout(_filterTimer);
             _filterTimer = setTimeout(filterMovies, 200);
+        }
+
+        // Non-blocking toast notification. Uses textContent, so messages
+        // (including server error text) can't inject markup.
+        function showToast(message, type = 'info') {
+            let container = document.getElementById('toastContainer');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toastContainer';
+                container.className = 'toast-container';
+                document.body.appendChild(container);
+            }
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-' + type;
+            toast.setAttribute('role', 'status');
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('toast-hide');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
         }
 
         // ---- Modal focus management (accessibility) ----
@@ -1477,7 +1525,15 @@
             }
         });
 
-        async function playMovie(uuid) {
+        async function playMovie(uuid, btn) {
+            // Per-button loading feedback so the user knows the click landed
+            // and can't double-fire it.
+            let originalText;
+            if (btn) {
+                originalText = btn.textContent;
+                btn.disabled = true;
+                btn.textContent = '⏳';
+            }
             try {
                 // POST (not GET) so the action can't be triggered cross-site
                 // by a stray <img>/link on another page (CSRF).
@@ -1489,17 +1545,20 @@
                 const result = await parseApiResponse(response);
 
                 if (result.status === 'success') {
-                    console.log(result.message);
-                }
-
-                else {
-                    alert('Error: ' + result.message);
+                    showToast(result.message || 'Playing', 'success');
+                } else {
+                    showToast('Error: ' + result.message, 'error');
                 }
             }
 
             catch (error) {
                 console.error('Play error:', error);
-                alert('Failed to play movie: ' + error.message);
+                showToast('Failed to play movie: ' + error.message, 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
             }
         }
 
@@ -1513,14 +1572,14 @@
                 });
                 const result = await parseApiResponse(response);
                 if (result.status === 'success') {
-                    console.log(result.message);
+                    showToast(result.message || 'Opened folder', 'success');
                 } else {
-                    alert('Error: ' + result.message);
+                    showToast('Error: ' + result.message, 'error');
                 }
             } catch (error) {
                 console.error('Folder open error:', error);
                 // Previously silent — give the user feedback (e.g. file missing).
-                alert('Failed to open folder: ' + error.message);
+                showToast('Failed to open folder: ' + error.message, 'error');
             }
         }
 
@@ -1631,7 +1690,7 @@
             if (!movie) return;
 
             switch (btn.dataset.action) {
-                case 'play': playMovie(movie.uuid); break;
+                case 'play': playMovie(movie.uuid, btn); break;
                 case 'folder': openFolder(movie.uuid); break;
                 case 'search': openSearchModal(movie.uuid, movie.extracted_name || '', movie.extracted_year || ''); break;
                 case 'info': showInfo(movie); break;
