@@ -350,8 +350,12 @@ Examples:
                         help="Fetch OMDb metadata")
     parser.add_argument("--full-enrich", action="store_true", 
                         help="Run full enrichment (AI + OMDb)")
-    parser.add_argument("--bulk", action="store_true", 
+    parser.add_argument("--bulk", action="store_true",
                         help="Use text-based bulk enrichment (faster, uses configured AI model)")
+    parser.add_argument("--model", choices=["2.5", "3.5"],
+                        help="Gemini Flash model for AI enrichment: "
+                             "2.5 (gemini-2.5-flash, higher free-tier quota) or "
+                             "3.5 (gemini-3.5-flash, latest). Default: config AI_MODEL.")
     
     # Server operations
     parser.add_argument("--server", action="store_true", 
@@ -368,9 +372,20 @@ Examples:
         return
     
     # -----------------------------------------------------------------
+    # MODEL SELECTION (optional override)
+    # Map the friendly --model choice to a full Gemini model id and apply it
+    # for this run. Affects AI enrichment (formatter + bulk); the Live API
+    # search model is separate.
+    # -----------------------------------------------------------------
+    MODEL_CHOICES = {"2.5": "gemini-2.5-flash", "3.5": "gemini-3.5-flash"}
+    if args.model:
+        from gemini_client import set_formatter_model
+        set_formatter_model(MODEL_CHOICES[args.model])
+
+    # -----------------------------------------------------------------
     # COMMAND DISPATCH
     # -----------------------------------------------------------------
-    
+
     # Server (handled first as it runs indefinitely)
     if args.server:
         from server import run_server

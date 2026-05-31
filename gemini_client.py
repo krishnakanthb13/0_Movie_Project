@@ -124,6 +124,23 @@ def get_client() -> genai.Client:
     return client
 
 
+def set_formatter_model(model_name: str) -> None:
+    """
+    Override the model used for JSON formatting (Step 2) and bulk
+    identification, for the current process.
+
+    Lets callers (e.g. the CLI --model flag) switch between Flash models at
+    runtime without editing config. The Live API search model (Step 1) is
+    separate and unaffected.
+
+    Args:
+        model_name (str): Full Gemini model id, e.g. "gemini-2.5-flash".
+    """
+    global MODEL_FORMATTER
+    MODEL_FORMATTER = model_name
+    logger.info(f"AI formatter model set to: {model_name}")
+
+
 # =============================================================================
 # RATE-LIMIT HANDLING
 # =============================================================================
