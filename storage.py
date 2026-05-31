@@ -776,6 +776,25 @@ def remove_missing_movies() -> int:
     return len(missing_uuids)
 
 
+def sync_sqlite_to_csv() -> None:
+    """
+    Rewrite the CSV from the current SQLite state, atomically.
+
+    Holds the write lock across BOTH the read and the rewrite so a concurrent
+    writer (e.g. another web request) can't slip an update in between, snapshot,
+    and clobber it. Without this, two callers could each read a snapshot and
+    then each rewrite the whole CSV from their own snapshot - last writer wins
+    and the other's change is lost from the CSV (SQLite stays correct).
+
+    Returns:
+        None
+    """
+    with _write_lock:
+        movies = get_all_movies_sqlite()
+        update_csv(movies)
+    logger.debug(f"Synced {len(movies)} records to CSV")
+
+
 def sync_csv_to_sqlite() -> None:
     """
     Sync CSV data to SQLite (CSV is source of truth).

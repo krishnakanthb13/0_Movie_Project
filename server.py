@@ -45,7 +45,7 @@ from pathlib import Path
 from typing import Dict, Any
 
 from config import SERVER_PORT, SERVER_HOST, WEB_DIR, VLC_PATH
-from storage import get_all_movies_sqlite, get_movie_by_uuid, update_sqlite_record, update_csv
+from storage import get_all_movies_sqlite, get_movie_by_uuid, update_sqlite_record, sync_sqlite_to_csv
 from omdb_client import fetch_movie_data
 
 # =============================================================================
@@ -313,10 +313,10 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
             
             # Update database record
             update_sqlite_record(uuid_val, updates)
-            
-            # Sync to CSV
-            all_movies = get_all_movies_sqlite()
-            update_csv(all_movies)
+
+            # Sync to CSV atomically (locked read+rewrite) so a concurrent
+            # request can't snapshot and clobber this update in the CSV.
+            sync_sqlite_to_csv()
             
             logger.info(f"Manual enrichment successful: {result.get('title')} ({result.get('year')})")
             

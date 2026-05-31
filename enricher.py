@@ -616,9 +616,10 @@ def sync_sqlite_to_csv():
         - Completely rewrites CSV file with SQLite data
         - Logs record count for verification
     """
-    movies = get_all_movies_sqlite()
-    update_csv(movies)
-    logger.debug(f"Synced {len(movies)} records to CSV")
+    # Delegate to the storage helper, which holds the write lock across the
+    # read+rewrite so concurrent writers can't clobber the CSV.
+    import storage
+    storage.sync_sqlite_to_csv()
 
 
 # =============================================================================
