@@ -8,7 +8,7 @@ First off, thank you for considering contributing! It's people like you that mak
 2. **Open a new issue**: Include as much detail as possible.
    - Describe the expected vs. actual behavior.
    - Provide your environment details (Python version, OS).
-   - Attach logs from `movie_library.log`.
+   - Attach logs from `data/enrichment.log`.
    - Provide example filenames that caused the issue.
 
 ## 💡 How to Suggest Features
@@ -36,8 +36,18 @@ First off, thank you for considering contributing! It's people like you that mak
    pip install -r requirements.txt
    ```
 3. **Set up environment**:
-   Create a `.env` file with your `GEMINI_API_KEY` and `OMDB_API_KEY`.
+   Create a `.env` file with your `GEMINI_API_KEY` and `OMDB_API_KEY`. Add `GROQ_API_KEY` only if you want to use the optional Groq provider (`AI_PROVIDER=groq` or `--provider groq`). Groq adds no new pip dependency — it reuses the existing `requests`.
 4. **VLC Media Player**: Required for testing the playback feature.
+
+### Useful CLI flags
+
+- `--provider {gemini,groq}` — choose the AI backend for a run.
+- `--model <name>` — override the model used by the active provider.
+- `--retry-failed` — re-run movies left in the failed state (`is_active=4`).
+
+### Adding a new AI provider
+
+The AI layer is provider-agnostic. To add one, implement the shared interface in a new client module — `identify_movie`, `identify_movies_bulk`, and `set_model` (mirroring `gemini_client.py` / `groq_client.py`) — then register it in `ai_provider._PROVIDERS`. The enrichment pipeline needs no changes.
 
 ## ✅ Testing Checklist
 

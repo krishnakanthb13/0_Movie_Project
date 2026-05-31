@@ -15,7 +15,8 @@ Maintaining a large local movie library is traditionally difficult due to:
 This project creates an **AI-powered Private Streaming Service** experience for local media. Unlike traditional media managers, it uses advanced AI models with web search capabilities to identify movies accurately without requiring perfectly named folders.
 
 ### Why This Solution?
-- **AI-First Identification**: Uses Gemini with Google Search to identify movies from even the most obscure filenames.
+- **AI-First Identification**: Uses AI to identify movies from even the most obscure filenames (Gemini with Google Search, or Groq's fast open models).
+- **Provider-Agnostic**: A pluggable AI layer (`ai_provider.py`) dispatches to either provider behind one shared interface, so swapping or adding backends never touches the pipeline.
 - **Privacy & Control**: Works locally, doesn't rename your files, and stores data in open formats (CSV/SQLite).
 - **Zero Configuration**: A single-file launcher handles setup and execution.
 
@@ -23,9 +24,11 @@ This project creates an **AI-powered Private Streaming Service** experience for 
 
 1. **🛡️ Safety First (Untouchable Files)**
    - The system NEVER moves, renames, or modifies your original movie files. It only creates a separate metadata index.
+   - The local server is defensively hardened: requests are confined to the project's web/movie directories (no path traversal), responses carry CSP and security headers, and concurrent writes are serialized through a lock to protect the CSV/DB.
 
 2. **⚡ Performance & Efficiency**
-   - The state-based enrichment pipeline (`is_active` flag) allows for interrupted and resumed processing.
+   - The state-based enrichment pipeline (`is_active` 0–4 state machine) is the pipeline's backbone, allowing interrupted runs to be resumed and failures to be retried.
+   - AI calls use request timeouts and 429 backoff so a stalled or rate-limited provider can't hang or derail a run.
    - The web viewer uses lazy loading and client-side filtering for a smooth experience even with 1000+ movies.
 
 3. **📂 Transparency & Portability**

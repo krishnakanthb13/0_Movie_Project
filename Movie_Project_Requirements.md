@@ -38,7 +38,7 @@ Design and implement a **Movie Library Project** that:
 
 1. [x] Scans a local directory for movie files
 2. [x] Indexes them into structured storage (CSV + optional SQLite)
-3. [x] Enriches metadata using **Gemini Live (AI)** - *Updated: Using native-audio-preview-12-2025 with 2-step Gemma pipeline*
+3. [x] Enriches metadata using **AI (Gemini or Groq)** - *Updated: 2-step Gemini pipeline (native-audio search + gemini-2.5-flash formatter) or the Groq provider; see Implemented Enhancements below*
 4. [x] Fetches authoritative data using **OMDb API (IMDb)**
 5. [x] Exposes a **local web viewer** with playback options (VLC) - *Port: 8010*
 
@@ -163,3 +163,98 @@ Design and implement a **Movie Library Project** that:
 ---
 
 **Project Final State: PRODUCTION READY 🚀**
+
+---
+
+## 🆕 Implemented Enhancements (current)
+
+> The sections above are the **original spec/history**. They are preserved as-is.
+> The list below documents features that have since been **implemented on top of**
+> that original scope, verified against the current code
+> (`main.py`, `config.py`, `server.py`, `enricher.py`, `ai_provider.py`,
+> `groq_client.py`, `gemini_client.py`, `storage.py`, `MovieLibrary.bat`).
+
+### Multi-Provider AI (Gemini + Groq)
+
+A pluggable AI layer (`ai_provider.py`) dispatches movie identification to the
+selected backend behind one shared interface, so the enrichment pipeline never
+needs to know which provider is active.
+
+* **Default provider: Gemini** — 2-step pipeline (Live API search-grounding with
+  `gemini-2.5-flash-native-audio-preview-12-2025`, then JSON formatting with the
+  configured `AI_MODEL`, default `gemini-2.5-flash`).
+* **Alternative provider: Groq** (`groq_client.py`) — fast open models via Groq's
+  OpenAI-compatible REST API (default `llama-3.3-70b-versatile`). Identifies from
+  model knowledge; OMDb remains the authoritative verifier. Groq **"compound"**
+  models add built-in web-search grounding (JSON mode is auto-disabled for them
+  and JSON is parsed defensively).
+* **Selection** (in priority order):
+  * `AI_PROVIDER` env var (`gemini` | `groq`, default `gemini`).
+  * `--provider {gemini,groq}` CLI flag (per run).
+  * `--model` CLI flag — Gemini shortcuts `2.5` / `3.5`, or any full model id
+    (e.g. `llama-3.3-70b-versatile`, `groq/compound`).
+  * Groq requires `GROQ_API_KEY` in `.env`.
+
+### Resilience
+
+* **Per-request timeout** — `config.AI_TIMEOUT_SECONDS = 120` applied to both
+  providers (Gemini converts to ms; Groq passes to `requests`), so a stalled
+  request can't hang the run.
+* **Automatic 429 retry/backoff** — Groq client retries on HTTP 429 with
+  exponential backoff, honoring the `Retry-After` header / body hint.
+* **Configurable bulk chunk size** — bulk enrichment chunks by
+  `config.BATCH_SIZE` (default 50).
+
+### Enrichment State Machine + Retry-Failed Flow
+
+`is_active` tracks each movie through the pipeline:
+
+| Value | State |
+|-------|-------|
+| 0 | Ignored (not processed) |
+| 1 | Pending AI |
+| 2 | Pending OMDb |
+| 3 | Success |
+| 4 | Failed |
+
+* **Retry-failed flow**: `--retry-failed` (and `MovieLibrary.bat` option `[F]`)
+  resets state `4 → 2` and re-runs the OMDb pass.
+
+### OMDb Verification
+
+* Prefers the AI-supplied **IMDb ID** for an exact, unambiguous lookup.
+* Falls back to a title/year search, then runs `verify_match` (normalized title
+  containment + 1-year tolerance) and **rejects mismatches** (state 4) rather
+  than attaching wrong metadata.
+
+### Security / Robustness (web server)
+
+* **Path-traversal-safe** static file serving (resolved path confined to `WEB_DIR`).
+* **CSP + security headers** on every response (incl. error pages):
+  `Content-Security-Policy`, `X-Content-Type-Options`, `Referrer-Policy`,
+  `X-Frame-Options`. No wildcard CORS.
+* **POST-only side-effecting endpoints**: `/play` and `/api/open-folder` are
+  POST (JSON body `{uuid}`), guarding against CSRF via stray links/images.
+* **Multi-threaded server** (`ThreadingMixIn`) with **write serialization** —
+  all mutating storage operations are guarded by a re-entrant lock, and
+  CSV sync holds the lock across read+rewrite.
+* **Request body cap** (1 MiB) + **socket timeout** (30s) to resist memory/slow
+  request DoS.
+
+### Environment Keys (`.env`)
+
+| Key | Required? |
+|-----|-----------|
+| `GEMINI_API_KEY` | Required for the default Gemini provider |
+| `OMDB_API_KEY` | Required for all metadata fetching |
+| `GROQ_API_KEY` | Optional — only when using the Groq provider |
+| `AI_PROVIDER` | Optional — `gemini` (default) or `groq` |
+
+### Updated Module List
+
+In addition to the original modules, the codebase now includes
+`ai_provider.py` (provider dispatcher) and `groq_client.py` (Groq backend).
+
+> **Note (original-spec correction):** Section 3 above states Step 2 formatting
+> uses `gemma-3-27b-it`. The current code uses the configured `AI_MODEL`
+> (default `gemini-2.5-flash`) as the formatter model.
