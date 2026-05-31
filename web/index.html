@@ -812,38 +812,6 @@
             /* Slightly smaller buttons */
         }
 
-        /* Wall View Styles (Dense Images) */
-        .movie-grid.wall-view {
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 10px;
-        }
-
-        .movie-grid.wall-view .movie-card {
-            border-radius: 8px;
-        }
-
-        .movie-grid.wall-view .poster-container {
-            height: 220px;
-            /* Taller aspect ratio for wall */
-        }
-
-        .movie-grid.wall-view .card-content {
-            display: none;
-            /* Hide text in wall view */
-        }
-
-        /* Show minimal overlay on hover in wall view */
-        .movie-grid.wall-view .movie-card:hover .card-content {
-            display: flex;
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.9);
-            padding: 10px;
-            z-index: 10;
-        }
-
         /* Clear Button Styles */
 
         .search-clear:hover {
@@ -1103,12 +1071,10 @@
 
             if (mode === 'list') {
                 container.classList.add('list-view');
-                container.classList.remove('wall-view');
                 btn.textContent = '⊞ Grid';
                 isListView = true;
             } else { // 'grid' mode
                 container.classList.remove('list-view');
-                container.classList.remove('wall-view');
                 btn.textContent = '☰ List';
                 isListView = false;
             }
@@ -1136,31 +1102,6 @@
             document.getElementById('yearSelect').value = "";
             document.getElementById('langSelect').value = "";
             document.getElementById('clearFiltersBtn').style.display = 'none';
-
-            filterMovies();
-        }
-
-        function toggleFilter(type, value) {
-            if (activeFilters[type] === value) {
-                activeFilters[type] = null;
-            }
-
-            else {
-                activeFilters[type] = value;
-            }
-
-            // Update button states
-            document.querySelectorAll(`.filter-tag`).forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            Object.entries(activeFilters).forEach(([key, val]) => {
-                if (val) {
-                    document.querySelectorAll(`.filter-tag`).forEach(btn => {
-                        if (btn.textContent === val) btn.classList.add('active');
-                    });
-                }
-            });
 
             filterMovies();
         }
@@ -1381,14 +1322,6 @@
 
             if (clearBtn) {
                 clearBtn.style.display = query.length > 0 ? 'block' : 'none';
-            }
-
-            // Toggle active filters row
-            const hasActiveFilters = Object.values(activeFilters).some(v => v !== null);
-            const activeFiltersRow = document.getElementById('activeFiltersRow');
-
-            if (activeFiltersRow) {
-                activeFiltersRow.style.display = hasActiveFilters ? 'flex' : 'none';
             }
 
             renderMovies(filtered);
