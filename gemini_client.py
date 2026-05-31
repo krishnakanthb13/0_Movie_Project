@@ -53,7 +53,7 @@ from typing import Dict, Optional
 from google import genai
 from google.genai import types
 
-from config import GEMINI_API_KEY, AI_REQUEST_DELAY, AI_MODEL, AI_SEARCH_MODEL
+from config import GEMINI_API_KEY, AI_REQUEST_DELAY, AI_MODEL, AI_SEARCH_MODEL, AI_TIMEOUT_SECONDS
 
 # Get logger for this module
 logger = logging.getLogger(__name__)
@@ -89,9 +89,23 @@ MODEL_FORMATTER = AI_MODEL
 # Global client instance (initialized lazily)
 client = None
 
+
+def _new_client() -> genai.Client:
+    """
+    Create a Gemini client with a per-request timeout.
+
+    The timeout (AI_TIMEOUT_SECONDS) prevents a stalled request from hanging
+    the process forever; HttpOptions.timeout is in milliseconds.
+    """
+    return genai.Client(
+        api_key=GEMINI_API_KEY,
+        http_options=types.HttpOptions(timeout=AI_TIMEOUT_SECONDS * 1000),
+    )
+
+
 # Initialize client if API key is available
 if GEMINI_API_KEY:
-    client = genai.Client(api_key=GEMINI_API_KEY)
+    client = _new_client()
 
 
 def get_client() -> genai.Client:
@@ -119,7 +133,7 @@ def get_client() -> genai.Client:
         raise ValueError("GEMINI_API_KEY not set in .env file")
     
     if client is None:
-        client = genai.Client(api_key=GEMINI_API_KEY)
+        client = _new_client()
 
     return client
 

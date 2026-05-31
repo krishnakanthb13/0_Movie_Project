@@ -159,6 +159,13 @@ OMDB_API_KEY = os.getenv("OMDB_API_KEY", "")
 # Range: 1.0 - 10.0 recommended
 AI_REQUEST_DELAY = 3.0
 
+# AI_TIMEOUT_SECONDS: Per-request timeout for Gemini API calls.
+# Without a timeout a stalled network request (or an overly long bulk
+# search-grounding call) can hang the process indefinitely. On timeout the
+# call fails and that chunk/movie is skipped so the run can continue.
+# Type: int (seconds)
+AI_TIMEOUT_SECONDS = 120
+
 # BATCH_SIZE: Number of movies to process in a single batch operation.
 # Used by bulk enrichment mode (--enrich --bulk).
 # Higher values = faster processing but more memory usage.
