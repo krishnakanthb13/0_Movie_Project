@@ -1479,7 +1479,13 @@
 
         async function playMovie(uuid) {
             try {
-                const response = await fetch(`/play?id=${uuid}`);
+                // POST (not GET) so the action can't be triggered cross-site
+                // by a stray <img>/link on another page (CSRF).
+                const response = await fetch('/play', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uuid })
+                });
                 const result = await response.json();
 
                 if (result.status === 'success') {
@@ -1499,7 +1505,12 @@
 
         async function openFolder(uuid) {
             try {
-                const response = await fetch(`/api/open-folder?id=${uuid}`);
+                // POST (not GET) to avoid cross-site triggering (CSRF).
+                const response = await fetch('/api/open-folder', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uuid })
+                });
                 const result = await response.json();
                 if (result.status === 'success') {
                     console.log(result.message);

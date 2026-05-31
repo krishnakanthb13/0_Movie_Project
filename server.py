@@ -13,8 +13,8 @@ This module implements a simple HTTP server that:
 Endpoints:
     GET  /                  -> Serves index.html
     GET  /api/movies        -> Returns all movies as JSON
-    GET  /play?id={uuid}    -> Launches movie in VLC
-    GET  /api/open-folder?id={uuid} -> Opens containing folder
+    POST /play              -> Launches movie in VLC (body: {uuid})
+    POST /api/open-folder   -> Opens containing folder (body: {uuid})
     POST /api/manual-enrich -> Manually enrich a movie via OMDb
     POST /api/update-metadata -> Update user ratings/tags
 
@@ -110,31 +110,11 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
         if path == "/api/movies":
             self.send_json(get_all_movies_sqlite())
             return
-        
-        # -----------------------------------------------------------------
-        # API ENDPOINT: Play movie in VLC
-        # Requires: ?id={uuid}
-        # -----------------------------------------------------------------
-        if path == "/play":
-            uuid_val = query.get("id", [None])[0]
-            if uuid_val:
-                self.play_movie(uuid_val)
-            else:
-                self.send_error(400, "Missing movie ID")
-            return
 
-        # -----------------------------------------------------------------
-        # API ENDPOINT: Open folder containing movie
-        # Requires: ?id={uuid}
-        # -----------------------------------------------------------------
-        if path == "/api/open-folder":
-            uuid_val = query.get("id", [None])[0]
-            if uuid_val:
-                self.open_folder(uuid_val)
-            else:
-                self.send_error(400, "Missing movie ID")
-            return
-        
+        # Note: /play and /api/open-folder have side effects (launching VLC,
+        # opening Explorer) and are handled as POST in do_POST, not GET, so
+        # they can't be triggered cross-site by a stray <img>/link (CSRF).
+
         # -----------------------------------------------------------------
         # STATIC FILE SERVING
         # Maps URL paths to files in WEB_DIR.
@@ -174,7 +154,9 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
         Routes requests based on path:
         - /api/manual-enrich -> Manual OMDb search and update
         - /api/update-metadata -> Update user ratings/tags
-        
+        - /play -> Launch movie in VLC
+        - /api/open-folder -> Open containing folder in Explorer
+
         Request body should be JSON for all POST endpoints.
         
         Args:
@@ -211,7 +193,31 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
         if path == "/api/update-metadata":
             self.update_metadata(data)
             return
-        
+
+        # -----------------------------------------------------------------
+        # API ENDPOINT: Play movie in VLC
+        # Body: {uuid}
+        # -----------------------------------------------------------------
+        if path == "/play":
+            uuid_val = data.get("uuid")
+            if uuid_val:
+                self.play_movie(uuid_val)
+            else:
+                self.send_error(400, "Missing movie ID")
+            return
+
+        # -----------------------------------------------------------------
+        # API ENDPOINT: Open folder containing movie
+        # Body: {uuid}
+        # -----------------------------------------------------------------
+        if path == "/api/open-folder":
+            uuid_val = data.get("uuid")
+            if uuid_val:
+                self.open_folder(uuid_val)
+            else:
+                self.send_error(400, "Missing movie ID")
+            return
+
         self.send_error(404, "Endpoint not found")
 
     # -------------------------------------------------------------------------
@@ -400,7 +406,10 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
         """
         self.send_response(200)
         self.send_header("Content-type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")
+        # No "Access-Control-Allow-Origin: *": this is a local single-origin
+        # app, and the wildcard let any website read the movie list and
+        # responses cross-origin. Same-origin requests from the bundled UI
+        # are unaffected.
         self.end_headers()
         self.wfile.write(json.dumps(data).encode("utf-8"))
 
