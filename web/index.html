@@ -988,7 +988,7 @@
 
             try {
                 const response = await fetch('/api/movies');
-                allMovies = await response.json();
+                allMovies = await parseApiResponse(response);
 
                 // Randomize movies
                 for (let i = allMovies.length - 1; i > 0; i--) {
@@ -1274,6 +1274,18 @@
             return String(text).replace(/[&<>"']/g, c => _HTML_ESCAPES[c]);
         }
 
+        // Parse a JSON response from our API. The server emits an HTML error
+        // page (not JSON) for send_error() failures, so calling response.json()
+        // on a non-OK response throws an opaque SyntaxError that hides the real
+        // cause (e.g. "VLC executable not found"). Guard on response.ok and
+        // surface the status reason instead.
+        async function parseApiResponse(response) {
+            if (!response.ok) {
+                throw new Error(response.statusText || ('HTTP ' + response.status));
+            }
+            return response.json();
+        }
+
         // Only allow absolute http(s) poster URLs (what OMDb returns); reject
         // anything else (a javascript:/data: scheme, or an attribute-breakout
         // payload like  x" onerror=...  which is not an absolute URL). Parsing
@@ -1495,7 +1507,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ uuid })
                 });
-                const result = await response.json();
+                const result = await parseApiResponse(response);
 
                 if (result.status === 'success') {
                     console.log(result.message);
@@ -1508,7 +1520,7 @@
 
             catch (error) {
                 console.error('Play error:', error);
-                alert('Failed to send play request');
+                alert('Failed to play movie: ' + error.message);
             }
         }
 
@@ -1520,7 +1532,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ uuid })
                 });
-                const result = await response.json();
+                const result = await parseApiResponse(response);
                 if (result.status === 'success') {
                     console.log(result.message);
                 } else {
@@ -1528,6 +1540,8 @@
                 }
             } catch (error) {
                 console.error('Folder open error:', error);
+                // Previously silent — give the user feedback (e.g. file missing).
+                alert('Failed to open folder: ' + error.message);
             }
         }
 
@@ -1597,10 +1611,10 @@
                     })
                 });
 
-                const result = await response.json();
+                const result = await parseApiResponse(response);
 
                 if (result.status === 'success') {
-                    resultDiv.innerHTML = `<div class="search-result success">✅ ${result.message}</div>`;
+                    resultDiv.innerHTML = `<div class="search-result success">✅ ${escapeHtml(result.message)}</div>`;
 
                     // Reload movies after 1.5 seconds
                     setTimeout(() => {
@@ -1609,6 +1623,10 @@
                     }
 
                         , 1500);
+                } else {
+                    // Server returned {status:"error"} (e.g. "No results found").
+                    // Without this branch the spinner spun forever.
+                    resultDiv.innerHTML = `<div class="search-result error">❌ ${escapeHtml(result.message || 'Search failed')}</div>`;
                 }
 
             } catch (error) {
