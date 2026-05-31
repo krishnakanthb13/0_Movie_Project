@@ -206,9 +206,9 @@
             <a href="/" style="color: var(--text-secondary); text-decoration: none;">Back to Viewer</a>
         </header>
 
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('pending')">Pending Enrichment</button>
-            <button class="tab-btn" onclick="switchTab('enriched')">Enriched</button>
+        <div class="tabs" role="tablist">
+            <button class="tab-btn active" role="tab" aria-selected="true" onclick="switchTab('pending')">Pending Enrichment</button>
+            <button class="tab-btn" role="tab" aria-selected="false" onclick="switchTab('enriched')">Enriched</button>
         </div>
 
         <div id="movieList" class="movie-list">
@@ -218,7 +218,7 @@
 
     <!-- Info Modal -->
     <div id="infoModal" class="modal-overlay" onclick="closeModal()">
-        <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" onclick="event.stopPropagation()">
             <h2 id="modalTitle">Movie Details</h2>
             <div id="modalContent"></div>
             <button onclick="closeModal()" style="margin-top: 20px; width: 100%;">Close</button>
@@ -271,8 +271,11 @@
 
         function switchTab(tab) {
             currentTab = tab;
-            document.querySelectorAll('.tab-btn').forEach(b =>
-                b.classList.toggle('active', b.getAttribute('onclick').includes(`'${tab}'`)));
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                const isActive = b.getAttribute('onclick').includes(`'${tab}'`);
+                b.classList.toggle('active', isActive);
+                b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
             render();
         }
 
@@ -398,12 +401,27 @@
                     </div>
                 </div>
             `;
-            document.getElementById('infoModal').style.display = 'flex';
+            _modalReturnFocus = document.activeElement;
+            const modal = document.getElementById('infoModal');
+            modal.style.display = 'flex';
+            // Move focus into the dialog (the Close button).
+            const closeBtn = modal.querySelector('.modal button');
+            if (closeBtn) closeBtn.focus();
         }
 
+        let _modalReturnFocus = null;
         function closeModal() {
             document.getElementById('infoModal').style.display = 'none';
+            if (_modalReturnFocus && _modalReturnFocus.focus) _modalReturnFocus.focus();
+            _modalReturnFocus = null;
         }
+
+        // Close the info modal on Escape.
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('infoModal').style.display === 'flex') {
+                closeModal();
+            }
+        });
 
         init();
     </script>

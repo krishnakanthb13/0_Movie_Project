@@ -831,10 +831,10 @@
                 <div class="header-actions">
                     <a href="enrichment.html" style="text-decoration:none;"><button class="toggle-btn"
                             title="Manage Enrichment">⚙ Manage</button></a>
-                    <button class="toggle-btn" id="viewToggle" onclick="cycleView()">👁️ View</button>
-                    <button class="toggle-btn" id="posterToggle" onclick="togglePosters()">🖼️ Posters</button>
-                    <button class="toggle-btn" id="imageToggle" onclick="toggleAutoImages()">⚡ Auto Images: OFF</button>
-                    <button onclick="loadMovies()">↻ Refresh</button>
+                    <button class="toggle-btn" id="viewToggle" onclick="cycleView()" aria-label="Toggle list/grid view">👁️ View</button>
+                    <button class="toggle-btn" id="posterToggle" onclick="togglePosters()" aria-label="Toggle posters">🖼️ Posters</button>
+                    <button class="toggle-btn" id="imageToggle" onclick="toggleAutoImages()" aria-label="Toggle auto-loading images">⚡ Auto Images: OFF</button>
+                    <button onclick="loadMovies()" aria-label="Refresh library">↻ Refresh</button>
                 </div>
             </div>
 
@@ -850,20 +850,20 @@
                     </div>
                 </div>
 
-                <select id="genreSelect" onchange="updateFilterFromSelect('genre', this.value)">
+                <select id="genreSelect" aria-label="Filter by genre" onchange="updateFilterFromSelect('genre', this.value)">
                     <option value="">All Genres</option>
                 </select>
 
-                <select id="yearSelect" onchange="updateFilterFromSelect('year', this.value)">
+                <select id="yearSelect" aria-label="Filter by decade" onchange="updateFilterFromSelect('year', this.value)">
                     <option value="">All Years</option>
                 </select>
 
-                <select id="langSelect" onchange="updateFilterFromSelect('language', this.value)">
+                <select id="langSelect" aria-label="Filter by language" onchange="updateFilterFromSelect('language', this.value)">
                     <option value="">All Languages</option>
                 </select>
 
                 <button class="clear-filters-btn" id="clearFiltersBtn" onclick="clearAllFilters()"
-                    title="Reset all filters">✖</button>
+                    aria-label="Reset all filters" title="Reset all filters">✖</button>
             </div>
         </div>
 
@@ -874,12 +874,12 @@
 
     <!-- Info Modal -->
     <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
-        <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <div>
                     <h2 class="modal-title" id="modalTitle">Movie Title</h2>
                 </div>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <button class="modal-close" onclick="closeModal()" aria-label="Close dialog">&times;</button>
             </div>
             <div class="modal-body" id="modalBody"><!-- Content will be dynamically inserted --></div>
         </div>
@@ -887,12 +887,12 @@
 
     <!-- Search Modal -->
     <div class="modal-overlay" id="searchModalOverlay" onclick="closeSearchModal(event)">
-        <div class="modal" onclick="event.stopPropagation()" style="max-width: 500px;">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="searchModalTitle" onclick="event.stopPropagation()" style="max-width: 500px;">
             <div class="modal-header">
                 <div>
                     <h2 class="modal-title" id="searchModalTitle">🔍 Manual OMDb Search</h2>
                 </div>
-                <button class="modal-close" onclick="closeSearchModal()">&times;</button>
+                <button class="modal-close" onclick="closeSearchModal()" aria-label="Close dialog">&times;</button>
             </div>
             <div class="search-modal-body">
                 <div class="search-hint">Enter movie details to search OMDb. Use IMDb ID (e.g., tt0133093) for best
@@ -900,15 +900,15 @@
                 <div class="search-form">
                     <input type="hidden" id="searchMovieUuid">
                     <div class="search-input-group">
-                        <label>IMDb ID (Preferred)</label>
+                        <label for="searchImdbId">IMDb ID (Preferred)</label>
                         <input type="text" id="searchImdbId" placeholder="e.g., tt0133093">
                     </div>
                     <div class="search-input-group">
-                        <label>Movie Title</label>
+                        <label for="searchTitle">Movie Title</label>
                         <input type="text" id="searchTitle" placeholder="e.g., The Matrix">
                     </div>
                     <div class="search-input-group">
-                        <label>Year (Optional)</label>
+                        <label for="searchYear">Year (Optional)</label>
                         <input type="text" id="searchYear" placeholder="e.g., 1999">
                     </div>
                     <button class="search-submit" onclick="submitManualSearch()">🔍 Search & Update</button>
@@ -940,6 +940,34 @@
         function debouncedFilter() {
             clearTimeout(_filterTimer);
             _filterTimer = setTimeout(filterMovies, 200);
+        }
+
+        // ---- Modal focus management (accessibility) ----
+        // Remember what to focus when a dialog closes, move focus into the
+        // dialog on open, and keep Tab inside it while open.
+        let _modalReturnFocus = null;
+        function getFocusable(container) {
+            return [...container.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )];
+        }
+        function activateModalFocus(dialogEl, preferred) {
+            _modalReturnFocus = document.activeElement;
+            const target = preferred || getFocusable(dialogEl)[0] || dialogEl;
+            if (target && target.focus) target.focus();
+        }
+        function restoreModalFocus() {
+            if (_modalReturnFocus && _modalReturnFocus.focus) _modalReturnFocus.focus();
+            _modalReturnFocus = null;
+        }
+        function trapModalTab(e) {
+            const dialog = document.querySelector('.modal-overlay.active .modal');
+            if (!dialog) return;
+            const f = getFocusable(dialog);
+            if (!f.length) return;
+            const first = f[0], last = f[f.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
         }
 
         let allMovies = [];
@@ -1427,20 +1455,25 @@
 
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+            activateModalFocus(modal.querySelector('.modal'));
         }
 
         function closeModal(event) {
             if (event && event.target !== event.currentTarget) return;
             const modal = document.getElementById('modalOverlay');
+            if (!modal.classList.contains('active')) return;
             modal.classList.remove('active');
             document.body.style.overflow = '';
+            restoreModalFocus();
         }
 
-        // Close modal on Escape key
+        // Close modal on Escape; trap Tab within an open dialog.
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeModal();
                 closeSearchModal();
+            } else if (e.key === 'Tab') {
+                trapModalTab(e);
             }
         });
 
@@ -1509,19 +1542,17 @@
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
 
-            // Focus the IMDb ID field
-            setTimeout(() => {
-                document.getElementById('searchImdbId').focus();
-            }
-
-                , 100);
+            // Move focus into the dialog, preferring the IMDb ID field.
+            activateModalFocus(modal.querySelector('.modal'), document.getElementById('searchImdbId'));
         }
 
         function closeSearchModal(event) {
             if (event && event.target !== event.currentTarget) return;
             const modal = document.getElementById('searchModalOverlay');
+            if (!modal.classList.contains('active')) return;
             modal.classList.remove('active');
             document.body.style.overflow = '';
+            restoreModalFocus();
         }
 
         async function submitManualSearch() {
