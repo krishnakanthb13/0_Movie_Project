@@ -536,8 +536,11 @@ class MovieRequestHandler(http.server.SimpleHTTPRequestHandler):
                 return
             
             # Windows-specific: select file in explorer
-            # /select flag highlights the file in its containing folder
-            subprocess.Popen(f'explorer /select,"{full_path_obj}"')
+            # /select highlights the file in its containing folder.
+            # Use the argument-list form (not a formatted shell string) so
+            # paths with spaces, quotes, or other special characters are
+            # passed verbatim instead of being re-parsed by the shell.
+            subprocess.Popen(["explorer", f"/select,{full_path_obj}"])
             self.send_json({"status": "success", "message": f"Opened folder for {movie['file_name']}"})
                 
         except Exception as e:
