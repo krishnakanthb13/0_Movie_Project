@@ -892,7 +892,7 @@
             <div class="search-filters-row">
                 <div class="search-container">
                     <div class="search-input-wrapper">
-                        <input type="text" id="searchInput" placeholder="🔍 Search movies..." onkeyup="filterMovies()">
+                        <input type="text" id="searchInput" placeholder="🔍 Search movies..." aria-label="Search movies" oninput="debouncedFilter()">
                         <button id="searchClear" class="search-clear" onclick="clearSearch()"
                             title="Clear search">&times;</button>
                     </div>
@@ -983,6 +983,16 @@
             try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
         }
 
+        // Debounce so the grid re-renders ~once per typing pause instead of on
+        // every keystroke (each render filters all movies and rebuilds cards).
+        // Declared as a function (not a const) so the inline oninput handler
+        // can reach it.
+        let _filterTimer;
+        function debouncedFilter() {
+            clearTimeout(_filterTimer);
+            _filterTimer = setTimeout(filterMovies, 200);
+        }
+
         let allMovies = [];
         let showPosters = loadPref('showPosters', true);
         let isListView = loadPref('isListView', false);
@@ -1003,11 +1013,16 @@
                 const response = await fetch('/api/movies');
                 allMovies = await parseApiResponse(response);
 
-                // Randomize movies
-                for (let i = allMovies.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [allMovies[i], allMovies[j]] = [allMovies[j], allMovies[i]];
-                }
+                // Sort once here (enriched first, then year desc). Previously
+                // the list was shuffled here and then re-sorted on every
+                // render, so the shuffle was wasted work and the sort ran on
+                // each keystroke. Sorting once keeps a stable, meaningful order
+                // and filtering preserves it.
+                allMovies.sort((a, b) => {
+                    if (a.ai_title !== 'NA' && b.ai_title === 'NA') return -1;
+                    if (a.ai_title === 'NA' && b.ai_title !== 'NA') return 1;
+                    return (parseInt(b.year, 10) || 0) - (parseInt(a.year, 10) || 0);
+                });
 
                 updateStats();
                 populateFilters();
@@ -1184,62 +1199,37 @@
             filterMovies();
         }
 
-        function renderMovies(movies) {
-            const container = document.getElementById('movieContainer');
-            container.innerHTML = '';
+        // Build the inner HTML for a single movie card. Returns a string so
+        // the whole grid can be assembled and written with one innerHTML
+        // assignment (see renderMovies) instead of per-card createElement +
+        // appendChild. The outer div carries data-uuid for event delegation.
+        function buildCardHtml(movie) {
+            const title = movie.title !== 'NA' ? movie.title : (movie.ai_title !== 'NA' ? movie.ai_title : movie.extracted_name);
+            const year = movie.year !== 'NA' ? movie.year : movie.extracted_year;
+            const poster = safePosterUrl(movie.poster);
+            const rating = movie.imdb_rating && movie.imdb_rating !== 'NA' ? movie.imdb_rating : null;
+            const genre = movie.genre && movie.genre !== 'NA' ? movie.genre.split(',')[0].trim() : null;
 
-            if (movies.length === 0) {
-                container.innerHTML = '<div class="loading">🔍 No movies found matching your filters.</div>';
-                return;
+            let posterHtml = '';
+            if (showPosters) {
+                if (poster) {
+                    if (autoLoadImages) {
+                        posterHtml = `<div class="poster-container"><img src="${escapeHtml(poster)}" class="poster-img loaded" alt="${escapeHtml(title)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="poster-placeholder poster-fallback" style="display:none">🎬</div></div>`;
+                    } else {
+                        // Lazy: load on click. The img/prompt carry
+                        // data-action="load-poster"; the delegated handler
+                        // resolves the container, so we avoid fragile
+                        // nextElementSibling chains.
+                        posterHtml = `<div class="poster-container"><img data-src="${escapeHtml(poster)}" class="poster-img" alt="${escapeHtml(title)}" data-action="load-poster"><div class="poster-placeholder poster-fallback" style="display:none">🎬</div><div class="poster-placeholder poster-loadprompt" data-action="load-poster" style="cursor:pointer;font-size:1.5em;" title="Click to load poster">🖼️ Click to load</div></div>`;
+                    }
+                } else {
+                    posterHtml = ` <div class="poster-container" > <div class="poster-placeholder" >🎬</div> </div>`;
+                }
             }
 
-            // Sort: Enriched first, then by year desc.
-            // year is a string ("1999", "NA", ""), so coerce to a number and
-            // treat non-numeric values as 0. Using `b.year || 0` directly left
-            // "NA" as a string, making the subtraction NaN and the sort order
-            // undefined.
-            movies.sort((a, b) => {
-                if (a.ai_title !== 'NA' && b.ai_title === 'NA') return -1;
-                if (a.ai_title === 'NA' && b.ai_title !== 'NA') return 1;
-                return (parseInt(b.year, 10) || 0) - (parseInt(a.year, 10) || 0);
-            });
+            const hasOmdbData = movie.title !== 'NA' || movie.plot !== 'NA';
 
-            // Limit rendering for performance (first 100)
-            const displayMovies = movies.slice(0, 100);
-
-            displayMovies.forEach(movie => {
-                const title = movie.title !== 'NA' ? movie.title : (movie.ai_title !== 'NA' ? movie.ai_title : movie.extracted_name);
-                const year = movie.year !== 'NA' ? movie.year : movie.extracted_year;
-                const poster = safePosterUrl(movie.poster);
-                const rating = movie.imdb_rating && movie.imdb_rating !== 'NA' ? movie.imdb_rating : null;
-                const genre = movie.genre && movie.genre !== 'NA' ? movie.genre.split(',')[0].trim() : null;
-
-                const card = document.createElement('div');
-                card.className = 'movie-card';
-                card.dataset.uuid = movie.uuid;
-
-                // Poster with lazy loading
-                let posterHtml = '';
-
-                if (showPosters) {
-                    if (poster) {
-                        if (autoLoadImages) {
-                            posterHtml = `<div class="poster-container"><img src="${escapeHtml(poster)}" class="poster-img loaded" alt="${escapeHtml(title)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="poster-placeholder poster-fallback" style="display:none">🎬</div></div>`;
-                        } else {
-                            // Lazy: load on click. The img/prompt carry
-                            // data-action="load-poster"; the delegated handler
-                            // resolves the container, so we avoid fragile
-                            // nextElementSibling chains.
-                            posterHtml = `<div class="poster-container"><img data-src="${escapeHtml(poster)}" class="poster-img" alt="${escapeHtml(title)}" data-action="load-poster"><div class="poster-placeholder poster-fallback" style="display:none">🎬</div><div class="poster-placeholder poster-loadprompt" data-action="load-poster" style="cursor:pointer;font-size:1.5em;" title="Click to load poster">🖼️ Click to load</div></div>`;
-                        }
-                    } else {
-                        posterHtml = ` <div class="poster-container" > <div class="poster-placeholder" >🎬</div> </div>`;
-                    }
-                }
-
-                const hasOmdbData = movie.title !== 'NA' || movie.plot !== 'NA';
-
-                card.innerHTML = `${posterHtml}
+            return `<div class="movie-card" data-uuid="${escapeHtml(movie.uuid)}">${posterHtml}
                     <div class="card-content">
                         <div class="movie-title">${escapeHtml(title || 'Unknown Title')}</div>
                         <div class="movie-meta">
@@ -1256,17 +1246,28 @@
                             <button class="search-btn" data-action="search" title="Search OMDb" aria-label="Search OMDb">🔍</button>
                             ${hasOmdbData ? `<button class="info-btn" data-action="info" title="More info" aria-label="More info">ℹ</button>` : ''}
                         </div>
-                    </div>`;
-                container.appendChild(card);
-            });
+                    </div></div>`;
+        }
+
+        function renderMovies(movies) {
+            const container = document.getElementById('movieContainer');
+
+            if (movies.length === 0) {
+                container.innerHTML = '<div class="loading">🔍 No movies found matching your filters.</div>';
+                return;
+            }
+
+            // movies arrives already sorted (sorted once in loadMovies, and
+            // filtering preserves order), so no per-render sort is needed.
+            // Render the first 100 in a single innerHTML write to avoid 100
+            // separate parse/layout cycles per keystroke.
+            let html = movies.slice(0, 100).map(buildCardHtml).join('');
 
             if (movies.length > 100) {
-                const more = document.createElement('div');
-                more.className = 'loading';
-
-                more.textContent = `📚 And ${movies.length - 100} more... (refine your search)`;
-                container.appendChild(more);
+                html += `<div class="loading">📚 And ${movies.length - 100} more... (refine your search)</div>`;
             }
+
+            container.innerHTML = html;
         }
 
         // Load a lazy poster given any element inside its container. Resolves
