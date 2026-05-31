@@ -42,6 +42,7 @@ import csv
 import sqlite3
 import uuid
 import logging
+import threading
 from pathlib import Path
 from typing import List, Dict, Optional, Any
 from datetime import datetime
@@ -50,6 +51,18 @@ from config import CSV_FILE, SQLITE_FILE
 
 # Get logger for this module
 logger = logging.getLogger(__name__)
+
+# =============================================================================
+# WRITE SERIALIZATION
+# =============================================================================
+# The web server is multi-threaded (ThreadingMixIn), so multiple requests can
+# call write operations concurrently. The CSV is persisted via full rewrite
+# (read-all -> write-all), which is not atomic: two interleaved rewrites can
+# lose data or corrupt the file. SQLite likewise raises "database is locked"
+# under concurrent writers. This re-entrant lock serializes all mutating
+# operations so writes from different threads can't interleave. It is an
+# RLock so functions that already hold it can call other guarded helpers.
+_write_lock = threading.RLock()
 
 
 # =============================================================================
@@ -255,20 +268,21 @@ def append_to_csv(records: List[Dict]) -> int:
         - Appends new rows to CSV_FILE
         - Logs count of new records added
     """
-    # Get existing paths to check for duplicates
-    existing = get_existing_paths_csv()
-    
-    # Filter to only new records (not already in CSV)
-    new_records = [r for r in records if r["full_path"] not in existing]
-    
-    if new_records:
-        with open(CSV_FILE, "a", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
-            for record in new_records:
-                writer.writerow(record)
-        logger.info(f"Appended {len(new_records)} new records to CSV")
-    
-    return len(new_records)
+    with _write_lock:
+        # Get existing paths to check for duplicates
+        existing = get_existing_paths_csv()
+
+        # Filter to only new records (not already in CSV)
+        new_records = [r for r in records if r["full_path"] not in existing]
+
+        if new_records:
+            with open(CSV_FILE, "a", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
+                for record in new_records:
+                    writer.writerow(record)
+            logger.info(f"Appended {len(new_records)} new records to CSV")
+
+        return len(new_records)
 
 
 def update_csv(records: List[Dict]) -> None:
@@ -289,12 +303,13 @@ def update_csv(records: List[Dict]) -> None:
         This is a destructive operation. All existing CSV data
         is replaced with the provided records.
     """
-    with open(CSV_FILE, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
-        writer.writeheader()
-        for record in records:
-            writer.writerow(record)
-    logger.info(f"Updated CSV with {len(records)} records")
+    with _write_lock:
+        with open(CSV_FILE, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=CSV_COLUMNS)
+            writer.writeheader()
+            for record in records:
+                writer.writerow(record)
+        logger.info(f"Updated CSV with {len(records)} records")
 
 
 # =============================================================================
@@ -428,32 +443,35 @@ def insert_to_sqlite(records: List[Dict]) -> int:
     """
     if not records:
         return 0
-    
-    conn = get_db_connection()
-    try:
-        # Build column and placeholder strings
-        columns = ", ".join(CSV_COLUMNS)
-        placeholders = ", ".join(["?" for _ in CSV_COLUMNS])
-        
-        inserted = 0
-        for record in records:
-            # Create tuple of values in column order
-            values = tuple(record.get(col, "") for col in CSV_COLUMNS)
-            try:
-                conn.execute(
-                    f"INSERT OR IGNORE INTO movies ({columns}) VALUES ({placeholders})",
-                    values
-                )
-                if conn.total_changes > inserted:
-                    inserted += 1
-            except sqlite3.IntegrityError:
-                pass  # Duplicate, skip
-        
-        conn.commit()
-        logger.info(f"Inserted {inserted} new records to SQLite")
-        return inserted
-    finally:
-        conn.close()
+
+    with _write_lock:
+        conn = get_db_connection()
+        try:
+            # Build column and placeholder strings
+            columns = ", ".join(CSV_COLUMNS)
+            placeholders = ", ".join(["?" for _ in CSV_COLUMNS])
+
+            inserted = 0
+            for record in records:
+                # Create tuple of values in column order
+                values = tuple(record.get(col, "") for col in CSV_COLUMNS)
+                try:
+                    cursor = conn.execute(
+                        f"INSERT OR IGNORE INTO movies ({columns}) VALUES ({placeholders})",
+                        values
+                    )
+                    # rowcount is 1 for an actual insert, 0 when OR IGNORE
+                    # skips a duplicate. This is clearer and more robust than
+                    # diffing the connection-wide total_changes counter.
+                    inserted += cursor.rowcount
+                except sqlite3.IntegrityError:
+                    pass  # Duplicate, skip
+
+            conn.commit()
+            logger.info(f"Inserted {inserted} new records to SQLite")
+            return inserted
+        finally:
+            conn.close()
 
 
 def update_sqlite_record(uuid_val: str, updates: Dict) -> None:
@@ -475,22 +493,24 @@ def update_sqlite_record(uuid_val: str, updates: Dict) -> None:
         - Updates record in database
         - Sets updated_at to current timestamp
     """
-    conn = get_db_connection()
-    try:
-        # Add timestamp
-        updates["updated_at"] = datetime.now().isoformat()
-        
-        # Build SET clause
-        set_clause = ", ".join([f"{k} = ?" for k in updates.keys()])
-        values = list(updates.values()) + [uuid_val]
-        
-        conn.execute(
-            f"UPDATE movies SET {set_clause} WHERE uuid = ?",
-            values
-        )
-        conn.commit()
-    finally:
-        conn.close()
+    # Work on a copy so we don't mutate the caller's dict by injecting
+    # the updated_at timestamp into it.
+    updates = {**updates, "updated_at": datetime.now().isoformat()}
+
+    with _write_lock:
+        conn = get_db_connection()
+        try:
+            # Build SET clause
+            set_clause = ", ".join([f"{k} = ?" for k in updates.keys()])
+            values = list(updates.values()) + [uuid_val]
+
+            conn.execute(
+                f"UPDATE movies SET {set_clause} WHERE uuid = ?",
+                values
+            )
+            conn.commit()
+        finally:
+            conn.close()
 
 
 def get_all_movies_sqlite() -> List[Dict]:
@@ -716,14 +736,15 @@ def remove_missing_movies() -> int:
     missing_uuids = {m["uuid"] for m in missing}
     
     # Remove from SQLite
-    conn = get_db_connection()
-    try:
-        for uuid_val in missing_uuids:
-            conn.execute("DELETE FROM movies WHERE uuid = ?", (uuid_val,))
-        conn.commit()
-        logger.info(f"Removed {len(missing_uuids)} records from SQLite")
-    finally:
-        conn.close()
+    with _write_lock:
+        conn = get_db_connection()
+        try:
+            for uuid_val in missing_uuids:
+                conn.execute("DELETE FROM movies WHERE uuid = ?", (uuid_val,))
+            conn.commit()
+            logger.info(f"Removed {len(missing_uuids)} records from SQLite")
+        finally:
+            conn.close()
     
     # Remove from CSV (rewrite without missing)
     all_records = get_all_movies_sqlite()
